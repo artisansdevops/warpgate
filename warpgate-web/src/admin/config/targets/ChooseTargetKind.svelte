@@ -48,6 +48,12 @@
             description: 'Access a Windows remote desktop in the browser',
             experimental: true,
         },
+        {
+            name: 'Redis',
+            value: TargetKind.Redis,
+            description: 'Expose access to a Redis-compatible server',
+            experimental: true,
+        },
     ]
 </script>
 
