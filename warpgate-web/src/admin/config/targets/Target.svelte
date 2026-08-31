@@ -134,7 +134,7 @@
                 >
                     <ModalHeader>Access instructions</ModalHeader>
                     <ModalBody>
-                        {#if target.options.kind === 'Ssh' || target.options.kind === 'MySql' || target.options.kind === 'Postgres' || target.options.kind === 'Kubernetes' || target.options.kind === 'Redis'}
+                        {#if target.options.kind === 'Ssh' || target.options.kind === 'MySql' || target.options.kind === 'Postgres' || target.options.kind === 'Kubernetes' || target.options.kind === 'Redis' || target.options.kind === 'RabbitMq'}
                             <Loadable promise={api.getUsers()}>
                                 {#snippet children(users)}
                                     <FormGroup floating label="Select a user">
@@ -163,6 +163,9 @@
                                 ? target.options.defaultDatabaseName
                                 : target.options.kind === TargetKind.Redis
                                 ? target.options.database?.toString()
+                                : undefined}
+                                targetVhost={target.options.kind === TargetKind.RabbitMq
+                                ? target.options.defaultVhost
                                 : undefined}
                             />
                         {/key}
@@ -200,6 +203,9 @@
                             {/if}
                             {#if target.options.kind === 'Redis'}
                                 Redis target
+                            {/if}
+                            {#if target.options.kind === 'RabbitMq'}
+                                RabbitMQ target
                             {/if}
                         </div>
                     </div>
@@ -427,13 +433,9 @@
                                     id="k8sImpersonateConnectingUser"
                                     class="mb-0 me-2"
                                     type="switch"
-                                    bind:checked={
-                                        target.options.impersonateConnectingUser
-                                    }
+                                    bind:checked={target.options.impersonateConnectingUser}
                                 />
-                                <div>
-                                    Impersonate the connecting user
-                                </div>
+                                <div>Impersonate the connecting user</div>
                             </label>
                             <p class="text-muted small">
                                 Instead of authorizing every request as the
@@ -442,8 +444,8 @@
                                 header carrying the connecting Warpgate
                                 username, so cluster RBAC is evaluated against
                                 that user's own Role/ClusterRoleBindings. The
-                                credential configured above must be granted
-                                the <code>impersonate</code> verb on the
+                                credential configured above must be granted the
+                                <code>impersonate</code> verb on the
                                 <code>users</code>
                                 resource for this to work.
                             </p>
@@ -573,8 +575,70 @@
                                 >
                                 <small class="form-text text-muted">
                                     Runs <code>SELECT</code> to this numbered
-                                    database right after connecting. Leave
-                                    empty to stay on the target's default (0).
+                                    database right after connecting. Leave empty
+                                    to stay on the target's default (0).
+                                </small>
+                            </FormGroup>
+
+                            <TlsConfiguration bind:value={target.options.tls} />
+                        {/if}
+
+                        {#if target.options.kind === 'RabbitMq'}
+                            <div class="row">
+                                <div class="col-8">
+                                    <FormGroup floating label="Target host">
+                                        <input
+                                            class="form-control"
+                                            bind:value={target.options.host}
+                                        >
+                                    </FormGroup>
+                                </div>
+                                <div class="col-4">
+                                    <FormGroup floating label="Target port">
+                                        <input
+                                            class="form-control"
+                                            type="number"
+                                            bind:value={target.options.port}
+                                            min="1"
+                                            max="65535"
+                                            step="1"
+                                        >
+                                    </FormGroup>
+                                </div>
+                            </div>
+
+                            <FormGroup floating label="Username">
+                                <input
+                                    class="form-control"
+                                    bind:value={target.options.username}
+                                >
+                            </FormGroup>
+
+                            {#if target.options.auth.kind === 'Password'}
+                                <FormGroup floating label="Password">
+                                    <input
+                                        class="form-control"
+                                        type="password"
+                                        autocomplete="off"
+                                        bind:value={target.options.auth.password}
+                                    >
+                                </FormGroup>
+                            {/if}
+
+                            <FormGroup
+                                floating
+                                label="Default virtual host (optional)"
+                            >
+                                <input
+                                    class="form-control"
+                                    bind:value={target.options.defaultVhost}
+                                    placeholder="/"
+                                >
+                                <small class="form-text text-muted">
+                                    Used only for the connection examples shown
+                                    to users - the virtual host the client
+                                    actually requests on connecting is always
+                                    forwarded to the target as-is.
                                 </small>
                             </FormGroup>
 
@@ -727,10 +791,30 @@
                                     title="Human-readable duration (e.g., '30m', '1h', '2h30m'). Default: 10m"
                                 >
                                 <small class="form-text text-muted">
-                                    How long an authenticated session can
-                                    remain idle before requiring
-                                    re-authentication. Examples: 30m, 1h,
-                                    2h30m. Leave empty for default (10m).
+                                    How long an authenticated session can remain
+                                    idle before requiring re-authentication.
+                                    Examples: 30m, 1h, 2h30m. Leave empty for
+                                    default (10m).
+                                </small>
+                            </FormGroup>
+                        </Section>
+                    {/if}
+
+                    {#if target.options.kind === 'RabbitMq'}
+                        <Section id="advanced" title="Advanced">
+                            <FormGroup floating label="Idle timeout">
+                                <input
+                                    class="form-control"
+                                    type="text"
+                                    placeholder="10m"
+                                    bind:value={target.options.idleTimeout}
+                                    title="Human-readable duration (e.g., '30m', '1h', '2h30m'). Default: 10m"
+                                >
+                                <small class="form-text text-muted">
+                                    How long an authenticated session can remain
+                                    idle before requiring re-authentication.
+                                    Examples: 30m, 1h, 2h30m. Leave empty for
+                                    default (10m).
                                 </small>
                             </FormGroup>
                         </Section>

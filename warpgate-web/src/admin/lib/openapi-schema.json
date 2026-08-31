@@ -6245,6 +6245,42 @@
           "3.2"
         ]
       },
+      "RabbitMqTargetAuth": {
+        "type": "object",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/RabbitMqTargetAuth_DatabaseTargetPasswordAuth"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "Password": "#/components/schemas/RabbitMqTargetAuth_DatabaseTargetPasswordAuth"
+          }
+        }
+      },
+      "RabbitMqTargetAuth_DatabaseTargetPasswordAuth": {
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "Password"
+                ],
+                "example": "Password"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/DatabaseTargetPasswordAuth"
+          }
+        ]
+      },
       "RdpTargetAuth": {
         "type": "object",
         "oneOf": [
@@ -7241,6 +7277,9 @@
           },
           {
             "$ref": "#/components/schemas/TargetOptions_TargetRedisOptions"
+          },
+          {
+            "$ref": "#/components/schemas/TargetOptions_TargetRabbitMqOptions"
           }
         ],
         "discriminator": {
@@ -7253,7 +7292,8 @@
             "Postgres": "#/components/schemas/TargetOptions_TargetPostgresOptions",
             "Vnc": "#/components/schemas/TargetOptions_TargetVncOptions",
             "Rdp": "#/components/schemas/TargetOptions_TargetRdpOptions",
-            "Redis": "#/components/schemas/TargetOptions_TargetRedisOptions"
+            "Redis": "#/components/schemas/TargetOptions_TargetRedisOptions",
+            "RabbitMq": "#/components/schemas/TargetOptions_TargetRabbitMqOptions"
           }
         }
       },
@@ -7342,6 +7382,28 @@
           },
           {
             "$ref": "#/components/schemas/TargetPostgresOptions"
+          }
+        ]
+      },
+      "TargetOptions_TargetRabbitMqOptions": {
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "RabbitMq"
+                ],
+                "example": "RabbitMq"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/TargetRabbitMqOptions"
           }
         ]
       },
@@ -7469,6 +7531,42 @@
           },
           "protocol_version": {
             "$ref": "#/components/schemas/PostgresProtocolVersion"
+          }
+        }
+      },
+      "TargetRabbitMqOptions": {
+        "type": "object",
+        "title": "TargetRabbitMqOptions",
+        "required": [
+          "host",
+          "port",
+          "username",
+          "auth",
+          "tls"
+        ],
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer",
+            "format": "uint16"
+          },
+          "username": {
+            "type": "string"
+          },
+          "auth": {
+            "$ref": "#/components/schemas/RabbitMqTargetAuth"
+          },
+          "tls": {
+            "$ref": "#/components/schemas/Tls"
+          },
+          "default_vhost": {
+            "type": "string",
+            "description": "Virtual host used purely for connection examples shown to the user - the\nclient's own `Connection.Open` virtual-host is always forwarded to the\ntarget as-is, same as `default_database_name` on the SQL targets does not\nrestrict which database a client may select."
+          },
+          "idle_timeout": {
+            "type": "string"
           }
         }
       },
@@ -8155,6 +8253,12 @@
             }
           },
           "redis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CredentialKind"
+            }
+          },
+          "rabbitmq": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CredentialKind"

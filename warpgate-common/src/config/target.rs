@@ -7,8 +7,9 @@ use warpgate_tls::TlsMode;
 
 use super::defaults::{
     _default_empty_string, _default_empty_vec, _default_mysql_port,
-    _default_postgres_idle_timeout_str, _default_postgres_port, _default_rdp_port,
-    _default_redis_port, _default_ssh_port, _default_username, _default_vnc_port,
+    _default_postgres_idle_timeout_str, _default_postgres_port, _default_rabbitmq_port,
+    _default_rabbitmq_username, _default_rdp_port, _default_redis_port, _default_ssh_port,
+    _default_username, _default_vnc_port,
 };
 use crate::encryption::EncryptionError;
 use crate::{Protocol, Secret, StoredSecret};
@@ -269,6 +270,48 @@ pub struct TargetRedisOptions {
     pub iam_region: Option<String>,
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Union)]
+#[serde(tag = "kind")]
+#[oai(discriminator_name = "kind", one_of)]
+pub enum RabbitMqTargetAuth {
+    #[serde(rename = "password")]
+    Password(DatabaseTargetPasswordAuth),
+}
+
+impl Default for RabbitMqTargetAuth {
+    fn default() -> Self {
+        Self::Password(DatabaseTargetPasswordAuth::default())
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Object)]
+pub struct TargetRabbitMqOptions {
+    #[serde(default = "_default_empty_string")]
+    pub host: String,
+
+    #[serde(default = "_default_rabbitmq_port")]
+    pub port: u16,
+
+    #[serde(default = "_default_rabbitmq_username")]
+    pub username: String,
+
+    #[serde(default)]
+    pub auth: RabbitMqTargetAuth,
+
+    #[serde(default)]
+    pub tls: Tls,
+
+    /// Virtual host used purely for connection examples shown to the user - the
+    /// client's own `Connection.Open` virtual-host is always forwarded to the
+    /// target as-is, same as `default_database_name` on the SQL targets does not
+    /// restrict which database a client may select.
+    #[serde(default)]
+    pub default_vhost: Option<String>,
+
+    #[serde(default)]
+    pub idle_timeout: Option<String>,
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Object)]
 pub struct TargetVncOptions {
     #[serde(default = "_default_empty_string")]
@@ -476,6 +519,8 @@ pub enum TargetOptions {
     Rdp(TargetRdpOptions),
     #[serde(rename = "redis")]
     Redis(TargetRedisOptions),
+    #[serde(rename = "rabbitmq")]
+    RabbitMq(TargetRabbitMqOptions),
 }
 
 impl TargetOptions {
@@ -489,6 +534,7 @@ impl TargetOptions {
             TargetOptions::Vnc(_) => Protocol::Vnc,
             TargetOptions::Rdp(_) => Protocol::Rdp,
             TargetOptions::Redis(_) => Protocol::Redis,
+            TargetOptions::RabbitMq(_) => Protocol::RabbitMq,
         }
     }
 
@@ -522,6 +568,7 @@ const SECRET_PATHS: &[&[&str]] = &[
     &["kubernetes", "auth", "token"],
     &["kubernetes", "auth", "private_key"],
     &["redis", "auth", "password"],
+    &["rabbitmq", "auth", "password"],
 ];
 
 /// Rewrite every secret in a serialized TargetOptions
@@ -671,6 +718,10 @@ mod tests {
             (
                 serde_json::json!({"redis": {"auth": {"kind": "password", "password": "p"}}}),
                 serde_json::json!({"redis": {"auth": {"kind": "password", "password": "Xp"}}}),
+            ),
+            (
+                serde_json::json!({"rabbitmq": {"auth": {"kind": "password", "password": "p"}}}),
+                serde_json::json!({"rabbitmq": {"auth": {"kind": "password", "password": "Xp"}}}),
             ),
             (
                 serde_json::json!({"kubernetes": {"auth": {"kind": "token", "token": "t"}}}),

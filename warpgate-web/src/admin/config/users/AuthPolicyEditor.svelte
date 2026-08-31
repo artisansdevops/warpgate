@@ -41,6 +41,7 @@
         { id: 'vnc', name: 'VNC' },
         { id: 'rdp', name: 'RDP' },
         { id: 'redis', name: 'Redis' },
+        { id: 'rabbitmq', name: 'RabbitMQ' },
     ]
 
     const possibleCredentialsByProtocol = $derived(
@@ -77,6 +78,7 @@
         http: new Map(),
         mysql: new Map(),
         redis: new Map(),
+        rabbitmq: new Map(),
         ssh: new Map(),
         vnc: new Map([
             [

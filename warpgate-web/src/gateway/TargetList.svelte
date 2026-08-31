@@ -289,6 +289,9 @@
                 {#if target.kind === TargetKind.Redis}
                     Redis
                 {/if}
+                {#if target.kind === TargetKind.RabbitMq}
+                    RabbitMQ
+                {/if}
             </small>
             {#if target.kind === TargetKind.Http}
                 <Button color="link" size="sm" tabindex={-1}>

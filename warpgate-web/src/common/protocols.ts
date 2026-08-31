@@ -10,6 +10,7 @@ export interface ConnectionOptions {
     targetExternalHost?: string
     ticketSecret?: string
     targetDefaultDatabaseName?: string
+    targetVhost?: string
     clientCertificatePem?: string
     clientPrivateKeyPem?: string
     oidcIssuerUrl?: string
@@ -157,6 +158,14 @@ export function makeExampleRedisURI(opt: ConnectionOptions): string {
     return `redis://${makeRedisUsername(opt)}${pwSuffix}@${protocolHost(opt, 'redis')}:${protocolPortString(opt, 'redis')}${db ? `/${db}` : ''}`
 }
 
+export const makeRabbitMqUsername = makeMySQLUsername
+
+export function makeExampleRabbitMqURI(opt: ConnectionOptions): string {
+    const pwSuffix = opt.ticketSecret ? '' : ':<password>'
+    const vhost = opt.targetVhost?.trim()
+    return `amqp://${makeRabbitMqUsername(opt)}${pwSuffix}@${protocolHost(opt, 'rabbitmq')}:${protocolPortString(opt, 'rabbitmq')}${vhost ? `/${encodeURIComponent(vhost)}` : ''}`
+}
+
 export function makeTargetURL(opt: ConnectionOptions): string {
     const host = `${opt.targetExternalHost ?? protocolHost(opt, 'http')}:${protocolPort(opt, 'http') ?? 443}`
 
@@ -199,6 +208,7 @@ export const possibleCredentials: Record<string, Set<CredentialKind>> = {
         CredentialKind.WebUserApproval,
     ]),
     redis: new Set([CredentialKind.Password]),
+    rabbitmq: new Set([CredentialKind.Password]),
 }
 
 export function abbreviatePublicKey(key: string): string {
@@ -346,6 +356,7 @@ export const PROTOCOL_PROPERTIES: Record<string, ProtocolProperties> = {
     VNC: { sessionsCanBeClosed: true },
     RDP: { sessionsCanBeClosed: true },
     Redis: { sessionsCanBeClosed: true },
+    RabbitMQ: { sessionsCanBeClosed: true },
 }
 
 export type ProtocolID =
@@ -357,6 +368,7 @@ export type ProtocolID =
     | 'vnc'
     | 'rdp'
     | 'redis'
+    | 'rabbitmq'
 
 // Get effective possible credentials for a protocol, considering global SSH auth settings
 export function getEffectivePossibleCredentials(

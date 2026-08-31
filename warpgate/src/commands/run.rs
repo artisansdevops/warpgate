@@ -21,6 +21,7 @@ use warpgate_protocol_http::HTTPProtocolServer;
 use warpgate_protocol_kubernetes::KubernetesProtocolServer;
 use warpgate_protocol_mysql::MySQLProtocolServer;
 use warpgate_protocol_postgres::PostgresProtocolServer;
+use warpgate_protocol_rabbitmq::RabbitMqProtocolServer;
 use warpgate_protocol_rdp::RdpProtocolServer;
 use warpgate_protocol_redis::RedisProtocolServer;
 use warpgate_protocol_ssh::SSHProtocolServer;
@@ -194,8 +195,8 @@ pub async fn command(params: &GlobalParams, enable_admin_token: bool) -> Result<
 
     // These protocols are uniform: sync `new`, one enable flag, one cert/key pair.
     // `$cfg` is the `store` field holding their config (all share the shape).
-    // `$requires_tls` is false only for Redis, which - unlike the others - has
-    // no in-protocol STARTTLS and so can run as a plaintext listener.
+    // `$requires_tls` is false only for Redis and RabbitMQ, which - unlike the
+    // others - have no in-protocol STARTTLS and so can run as plaintext listeners.
     macro_rules! tls_listener {
         ($name:literal, $server:ident, $cfg:ident, $requires_tls:expr) => {{
             let status_registry = services.listener_status.clone();
@@ -219,8 +220,15 @@ pub async fn command(params: &GlobalParams, enable_admin_token: bool) -> Result<
                         .into_iter()
                         .collect(),
                 });
-            spawn_supervisor($name, $requires_tls, factory, selector, &config_rx, status_registry)
-                .await?
+            spawn_supervisor(
+                $name,
+                $requires_tls,
+                factory,
+                selector,
+                &config_rx,
+                status_registry,
+            )
+            .await?
         }};
     }
 
@@ -239,10 +247,11 @@ pub async fn command(params: &GlobalParams, enable_admin_token: bool) -> Result<
     ));
     supervisors.push(tls_listener!("VNC", VncProtocolServer, vnc, true));
     supervisors.push(tls_listener!("RDP", RdpProtocolServer, rdp, true));
+    supervisors.push(tls_listener!("Redis", RedisProtocolServer, redis, false));
     supervisors.push(tls_listener!(
-        "Redis",
-        RedisProtocolServer,
-        redis,
+        "RabbitMQ",
+        RabbitMqProtocolServer,
+        rabbitmq,
         false
     ));
 

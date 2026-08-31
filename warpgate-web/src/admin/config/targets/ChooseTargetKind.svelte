@@ -54,6 +54,12 @@
             description: 'Expose access to a Redis-compatible server',
             experimental: true,
         },
+        {
+            name: 'RabbitMQ',
+            value: TargetKind.RabbitMq,
+            description: 'Expose access to an AMQP 0-9-1 message broker',
+            experimental: true,
+        },
     ]
 </script>
 

@@ -500,6 +500,7 @@ impl ConfigProvider for DatabaseConfigProvider {
                 vnc,
                 rdp,
                 redis,
+                rabbitmq,
             } = req;
 
             for (protocol, required) in [
@@ -511,6 +512,7 @@ impl ConfigProvider for DatabaseConfigProvider {
                 (Protocol::Vnc, vnc),
                 (Protocol::Rdp, rdp),
                 (Protocol::Redis, redis),
+                (Protocol::RabbitMq, rabbitmq),
             ] {
                 if let Some(required) = required {
                     policy

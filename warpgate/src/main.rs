@@ -100,6 +100,10 @@ pub(crate) enum Commands {
         #[clap(long)]
         redis_port: Option<u16>,
 
+        /// Enable RabbitMQ and set port
+        #[clap(long)]
+        rabbitmq_port: Option<u16>,
+
         /// Enable session recording
         #[clap(long)]
         record_sessions: bool,

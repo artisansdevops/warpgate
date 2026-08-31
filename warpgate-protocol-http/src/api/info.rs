@@ -30,6 +30,7 @@ pub struct PortsInfo {
     vnc: Option<u16>,
     rdp: Option<u16>,
     redis: Option<u16>,
+    rabbitmq: Option<u16>,
 }
 
 #[derive(Serialize, Object)]
@@ -42,6 +43,7 @@ pub struct ExternalHostsInfo {
     vnc: Option<String>,
     rdp: Option<String>,
     redis: Option<String>,
+    rabbitmq: Option<String>,
 }
 
 #[derive(Serialize, Object, Debug)]
@@ -285,6 +287,12 @@ impl Api {
                     .external_host
                     .clone()
                     .or_else(|| fallback_host.clone()),
+                rabbitmq: config
+                    .store
+                    .rabbitmq
+                    .external_host
+                    .clone()
+                    .or_else(|| fallback_host.clone()),
             })
         } else {
             None
@@ -365,6 +373,11 @@ impl Api {
                     } else {
                         None
                     },
+                    rabbitmq: if config.store.rabbitmq.enable {
+                        Some(config.store.rabbitmq.external_port())
+                    } else {
+                        None
+                    },
                 }
             } else {
                 PortsInfo {
@@ -376,6 +389,7 @@ impl Api {
                     vnc: None,
                     rdp: None,
                     redis: None,
+                    rabbitmq: None,
                 }
             },
             own_credential_management_allowed: parameters.allow_own_credential_management,

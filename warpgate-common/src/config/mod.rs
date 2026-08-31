@@ -10,8 +10,8 @@ use std::time::Duration;
 use defaults::{
     _default_audit_retention, _default_cookie_max_age, _default_database_url, _default_false,
     _default_http_listen, _default_kubernetes_listen, _default_mysql_advertised_version,
-    _default_mysql_listen, _default_postgres_listen, _default_rdp_listen, _default_recordings_path,
-    _default_redis_listen, _default_retention, _default_session_max_age,
+    _default_mysql_listen, _default_postgres_listen, _default_rabbitmq_listen, _default_rdp_listen,
+    _default_recordings_path, _default_redis_listen, _default_retention, _default_session_max_age,
     _default_ssh_inactivity_timeout, _default_ssh_listen, _default_vnc_listen,
 };
 use poem_openapi::{Object, Union};
@@ -108,6 +108,8 @@ pub struct UserRequireCredentialsPolicy {
     pub rdp: Option<Vec<CredentialKind>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redis: Option<Vec<CredentialKind>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rabbitmq: Option<Vec<CredentialKind>>,
 }
 
 impl UserRequireCredentialsPolicy {
@@ -792,6 +794,57 @@ impl RedisConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, JsonSchema)]
+pub struct RabbitMqConfig {
+    #[serde(default = "_default_false")]
+    pub enable: bool,
+
+    #[serde(default = "_default_rabbitmq_listen")]
+    pub listen: ListenEndpoint,
+
+    /// Accept HAProxy PROXY protocol v1/v2 headers from the listener's peer.
+    #[serde(default)]
+    pub proxy_protocol: bool,
+
+    #[serde(default)]
+    pub external_port: Option<u16>,
+
+    #[serde(default)]
+    pub external_host: Option<String>,
+
+    /// Like Redis, AMQP 0-9-1 has no in-protocol STARTTLS: an empty
+    /// certificate/key means the listener runs in plaintext.
+    #[serde(default)]
+    pub certificate: String,
+
+    #[serde(default)]
+    pub key: String,
+}
+
+impl Default for RabbitMqConfig {
+    fn default() -> Self {
+        Self {
+            enable: false,
+            listen: _default_rabbitmq_listen(),
+            proxy_protocol: false,
+            external_port: None,
+            external_host: None,
+            certificate: "".into(),
+            key: "".into(),
+        }
+    }
+}
+
+impl RabbitMqConfig {
+    pub fn external_port(&self) -> u16 {
+        self.external_port.unwrap_or_else(|| self.listen.port())
+    }
+
+    pub fn external_host(&self) -> Option<String> {
+        self.external_host.clone()
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, JsonSchema)]
 pub struct VncConfig {
     #[serde(default = "_default_false")]
     pub enable: bool,
@@ -980,6 +1033,9 @@ pub struct WarpgateConfigStore {
     pub redis: RedisConfig,
 
     #[serde(default)]
+    pub rabbitmq: RabbitMqConfig,
+
+    #[serde(default)]
     pub log: LogConfig,
 }
 
@@ -998,6 +1054,7 @@ impl Default for WarpgateConfigStore {
             vnc: <_>::default(),
             rdp: <_>::default(),
             redis: <_>::default(),
+            rabbitmq: <_>::default(),
             log: <_>::default(),
         }
     }
