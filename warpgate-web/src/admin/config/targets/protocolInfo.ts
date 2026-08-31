@@ -111,6 +111,7 @@ export const protocolInfo: Partial<Record<TargetKind, string>> = {
 
 * Authenticates to the cluster with a client certificate (mTLS), a bearer token, or an IAM role (EKS token).
 * TLS at target is optional.
+* Optionally impersonates the connecting Warpgate user (\`Impersonate-User\`) instead of authorizing requests as the configured credential, so cluster RBAC applies per user. The credential must be granted the \`impersonate\` verb on \`users\`.
 
 ## Warpgate ↔ client
 

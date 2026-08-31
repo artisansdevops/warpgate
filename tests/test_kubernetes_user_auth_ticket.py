@@ -30,6 +30,7 @@ def create_target(api, port):
                     kind="Token", token="upstream-token",
                 ),
             ),
+            impersonate_connecting_user=False,
         )),
     ))
 

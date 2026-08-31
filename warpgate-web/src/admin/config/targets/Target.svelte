@@ -417,6 +417,36 @@
                             {/if}
 
                             <TlsConfiguration bind:value={target.options.tls} />
+
+                            <h5 class="mt-3">Access control</h5>
+                            <label
+                                for="k8sImpersonateConnectingUser"
+                                class="d-flex align-items-center mb-2"
+                            >
+                                <Input
+                                    id="k8sImpersonateConnectingUser"
+                                    class="mb-0 me-2"
+                                    type="switch"
+                                    bind:checked={
+                                        target.options.impersonateConnectingUser
+                                    }
+                                />
+                                <div>
+                                    Impersonate the connecting user
+                                </div>
+                            </label>
+                            <p class="text-muted small">
+                                Instead of authorizing every request as the
+                                identity above, send it with an
+                                <code>Impersonate-User</code>
+                                header carrying the connecting Warpgate
+                                username, so cluster RBAC is evaluated against
+                                that user's own Role/ClusterRoleBindings. The
+                                credential configured above must be granted
+                                the <code>impersonate</code> verb on the
+                                <code>users</code>
+                                resource for this to work.
+                            </p>
                         {/if}
 
                         {#if target.options.kind === 'Redis'}
