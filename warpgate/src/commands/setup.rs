@@ -16,7 +16,7 @@ use warpgate_common::helpers::fs::{secure_directory, secure_file};
 use warpgate_common::version::warpgate_version;
 use warpgate_common::{
     GlobalParams, HttpConfig, KubernetesConfig, ListenEndpoint, MySqlConfig, PostgresConfig,
-    RdpConfig, RedisConfig, Secret, SshConfig, VncConfig, WarpgateConfigStore,
+    RabbitMqConfig, RdpConfig, RedisConfig, Secret, SshConfig, VncConfig, WarpgateConfigStore,
 };
 use warpgate_core::consts::{BUILTIN_ADMIN_ROLE_NAME, BUILTIN_ADMIN_USERNAME};
 use warpgate_core::db::connect_to_db_and_migrate;
@@ -346,6 +346,33 @@ pub async fn command(cli: &Cli, params: &GlobalParams) -> Result<()> {
                 store.redis.listen = prompt_endpoint(
                     "Endpoint to listen for Redis connections on",
                     &RedisConfig::default().listen,
+                );
+            }
+        }
+    }
+
+    // RabbitMQ listens in plaintext by default (unlike the other DB protocols)
+    // since it has no in-protocol STARTTLS and most self-hosted RabbitMQ
+    // deployments run without TLS.
+    if let Commands::UnattendedSetup { rabbitmq_port, .. } = &cli.command {
+        if let Some(rabbitmq_port) = rabbitmq_port {
+            store.rabbitmq.enable = true;
+            store.rabbitmq.listen = ListenEndpoint::from(SocketAddr::new(
+                Ipv6Addr::UNSPECIFIED.into(),
+                *rabbitmq_port,
+            ));
+        }
+    } else {
+        if !is_docker() {
+            store.rabbitmq.enable = dialoguer::Confirm::with_theme(&theme)
+                .default(false)
+                .with_prompt("Accept RabbitMQ connections?")
+                .interact()?;
+
+            if store.rabbitmq.enable {
+                store.rabbitmq.listen = prompt_endpoint(
+                    "Endpoint to listen for RabbitMQ connections on",
+                    &RabbitMqConfig::default().listen,
                 );
             }
         }

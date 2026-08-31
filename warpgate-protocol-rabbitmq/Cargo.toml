@@ -1,0 +1,26 @@
+[package]
+name = "warpgate-protocol-rabbitmq"
+version = "0.28.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[dependencies]
+amq-protocol = { version = "10.6", default-features = false }
+anyhow.workspace = true
+bytes.workspace = true
+cookie-factory = { version = "0.3", default-features = false, features = ["std"] }
+futures.workspace = true
+humantime = { version = "2.1", default-features = false }
+rustls.workspace = true
+socket2 = { version = "0.6", features = ["all"], default-features = false }
+thiserror.workspace = true
+tokio.workspace = true
+tokio-rustls.workspace = true
+tracing.workspace = true
+url.workspace = true
+uuid.workspace = true
+warpgate-common = { path = "../warpgate-common", default-features = false }
+warpgate-common-http = { path = "../warpgate-common-http", default-features = false }
+warpgate-core = { path = "../warpgate-core", default-features = false }
+warpgate-tls = { path = "../warpgate-tls", default-features = false }

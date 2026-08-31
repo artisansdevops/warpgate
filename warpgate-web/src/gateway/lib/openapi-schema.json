@@ -2090,6 +2090,9 @@
           },
           "redis": {
             "type": "string"
+          },
+          "rabbitmq": {
+            "type": "string"
           }
         }
       },
@@ -2496,6 +2499,10 @@
           "redis": {
             "type": "integer",
             "format": "uint16"
+          },
+          "rabbitmq": {
+            "type": "integer",
+            "format": "uint16"
           }
         }
       },
@@ -2623,7 +2630,8 @@
           "Postgres",
           "Vnc",
           "Rdp",
-          "Redis"
+          "Redis",
+          "RabbitMq"
         ]
       },
       "TargetSnapshot": {
@@ -2878,6 +2886,12 @@
             }
           },
           "redis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CredentialKind"
+            }
+          },
+          "rabbitmq": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CredentialKind"

@@ -53,6 +53,18 @@ pub async fn command(params: &GlobalParams) -> Result<()> {
             .await
             .with_context(|| "Checking Redis key".to_string())?;
     }
+    if config.store.rabbitmq.enable && !config.store.rabbitmq.certificate.is_empty() {
+        TlsCertificateBundle::from_file(
+            params
+                .paths_relative_to()
+                .join(&config.store.rabbitmq.certificate),
+        )
+        .await
+        .with_context(|| "Checking RabbitMQ certificate".to_string())?;
+        TlsPrivateKey::from_file(params.paths_relative_to().join(&config.store.rabbitmq.key))
+            .await
+            .with_context(|| "Checking RabbitMQ key".to_string())?;
+    }
     info!("No problems found");
     Ok(())
 }

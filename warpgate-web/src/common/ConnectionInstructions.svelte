@@ -18,6 +18,7 @@
         makeExampleMySQLURI,
         makeExamplePostgreSQLCommand,
         makeExamplePostgreSQLURI,
+        makeExampleRabbitMqURI,
         makeExampleRedisCommand,
         makeExampleRedisURI,
         makeExampleSCPCommand,
@@ -26,6 +27,7 @@
         makeMySQLUsername,
         makeOidcKubeconfig,
         makePostgreSQLUsername,
+        makeRabbitMqUsername,
         makeRedisUsername,
         makeTargetURL,
         protocolHost,
@@ -53,6 +55,7 @@
         username?: string
         ticketSecret?: string
         targetDefaultDatabaseName?: string
+        targetVhost?: string
     }
 
     let {
@@ -62,6 +65,7 @@
         username,
         ticketSecret = undefined,
         targetDefaultDatabaseName = undefined,
+        targetVhost = undefined,
     }: Props = $props()
 
     let clientCertificatePem: string | undefined = $state()
@@ -188,6 +192,7 @@
         ticketSecret,
         targetExternalHost,
         targetDefaultDatabaseName,
+        targetVhost,
         clientCertificatePem,
         clientPrivateKeyPem,
         oidcIssuerUrl: selectedOidc?.issuerUrl,
@@ -203,7 +208,14 @@
     let exampleKubectlCommand = $derived(makeExampleKubectlCommand(opts))
 
     function protocolEndpoint(
-        protocol: 'ssh' | 'mysql' | 'postgres' | 'rdp' | 'vnc' | 'redis',
+        protocol:
+            | 'ssh'
+            | 'mysql'
+            | 'postgres'
+            | 'rdp'
+            | 'vnc'
+            | 'redis'
+            | 'rabbitmq',
     ) {
         return `${protocolHost(opts, protocol)}:${protocolPortString(opts, protocol)}`
     }
@@ -354,6 +366,28 @@
         Authenticate with <code>AUTH</code> or <code>HELLO ... AUTH</code>{' '}
         using the username and password above.
     </Alert>
+{/if}
+
+{#if targetKind === TargetKind.RabbitMq}
+    <CopyableTextArea
+        label="Example connection URI"
+        value={makeExampleRabbitMqURI(opts)}
+    />
+    <CollapsibleBlock
+        label="Advanced"
+        persistKey="connectionInstructionsAdvancedOpen"
+    >
+        <div class="mt-3">
+            <CopyableTextArea
+                label="RabbitMQ endpoint"
+                value={protocolEndpoint('rabbitmq')}
+            />
+            <CopyableTextArea
+                label="RabbitMQ username"
+                value={makeRabbitMqUsername(opts)}
+            />
+        </div>
+    </CollapsibleBlock>
 {/if}
 
 {#if targetKind === TargetKind.Kubernetes && !ticketSecret}

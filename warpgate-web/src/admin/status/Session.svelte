@@ -85,6 +85,9 @@
         if (target.options.kind === 'Redis') {
             address = `${target.options.host}:${target.options?.port}`
         }
+        if (target.options.kind === 'RabbitMq') {
+            address = `${target.options.host}:${target.options?.port}`
+        }
         return address
     }
 

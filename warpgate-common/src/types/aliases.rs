@@ -95,6 +95,7 @@ pub enum Protocol {
     Vnc,
     Rdp,
     Redis,
+    RabbitMq,
 }
 
 impl Protocol {
@@ -112,6 +113,7 @@ impl Protocol {
             Self::Vnc => "VNC",
             Self::Rdp => "RDP",
             Self::Redis => "Redis",
+            Self::RabbitMq => "RabbitMQ",
         }
     }
 }

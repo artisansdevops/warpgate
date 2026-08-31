@@ -125,6 +125,20 @@
                         password: '',
                     },
                 },
+                RabbitMq: {
+                    kind: TargetKind.RabbitMq,
+                    host: '192.168.0.1',
+                    port: 5672,
+                    tls: {
+                        mode: TlsMode.Disabled,
+                        verify: true,
+                    },
+                    username: 'guest',
+                    auth: {
+                        kind: 'Password' as const,
+                        password: '',
+                    },
+                },
             }[params.kind]
             if (!options) {
                 return

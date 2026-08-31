@@ -205,4 +205,28 @@ export const protocolInfo: Partial<Record<TargetKind, string>> = {
 * Password
 * Ticket
 `,
+
+    [TargetKind.RabbitMq]: `
+## Warpgate ↔ target
+
+* Authenticates with a stored password using SASL \`PLAIN\`.
+* TLS at target is optional.
+
+## Warpgate ↔ client
+
+* TLS is optional: the listener runs in plaintext unless a certificate is configured.
+* Client authenticates with SASL \`PLAIN\`, encoding the username as \`<warpgate-user>#<target>\`; only \`PLAIN\` is offered, other mechanisms are rejected.
+* The virtual host requested in \`Connection.Open\` is forwarded to the target as-is; it isn't restricted by the target's configured default.
+
+## AMQP protocol
+
+* AMQP 0-9-1 (the protocol RabbitMQ speaks), including exchanges, queues, publishing, consuming and transactions.
+* After the handshake completes, traffic is relayed unmodified - Warpgate does not otherwise interpret channels or messages.
+* Minimum target: any AMQP 0-9-1 broker offering the \`PLAIN\` SASL mechanism (e.g. RabbitMQ).
+
+## Supported Warpgate credentials
+
+* Password
+* Ticket
+`,
 }

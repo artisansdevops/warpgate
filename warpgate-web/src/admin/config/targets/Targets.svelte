@@ -202,6 +202,9 @@
                         {#if target.options.kind === TargetKind.Redis}
                             Redis
                         {/if}
+                        {#if target.options.kind === TargetKind.RabbitMq}
+                            RabbitMQ
+                        {/if}
                     </small>
                 </a>
             {/snippet}

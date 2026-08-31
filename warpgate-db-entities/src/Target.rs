@@ -23,6 +23,8 @@ pub enum TargetKind {
     Rdp,
     #[sea_orm(string_value = "redis")]
     Redis,
+    #[sea_orm(string_value = "rabbitmq")]
+    RabbitMq,
 }
 
 impl From<&TargetOptions> for TargetKind {
@@ -36,6 +38,7 @@ impl From<&TargetOptions> for TargetKind {
             TargetOptions::Vnc(_) => Self::Vnc,
             TargetOptions::Rdp(_) => Self::Rdp,
             TargetOptions::Redis(_) => Self::Redis,
+            TargetOptions::RabbitMq(_) => Self::RabbitMq,
         }
     }
 }

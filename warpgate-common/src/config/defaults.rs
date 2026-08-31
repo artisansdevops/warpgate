@@ -35,9 +35,18 @@ pub const fn _default_redis_port() -> u16 {
     6379
 }
 
+pub const fn _default_rabbitmq_port() -> u16 {
+    5672
+}
+
 #[inline]
 pub fn _default_username() -> String {
     "root".to_owned()
+}
+
+#[inline]
+pub fn _default_rabbitmq_username() -> String {
+    "guest".to_owned()
 }
 
 #[inline]
@@ -95,6 +104,11 @@ pub fn _default_rdp_listen() -> ListenEndpoint {
 #[inline]
 pub fn _default_redis_listen() -> ListenEndpoint {
     ListenEndpoint::from(SocketAddr::new(Ipv6Addr::UNSPECIFIED.into(), 6379))
+}
+
+#[inline]
+pub fn _default_rabbitmq_listen() -> ListenEndpoint {
+    ListenEndpoint::from(SocketAddr::new(Ipv6Addr::UNSPECIFIED.into(), 5672))
 }
 
 #[inline]
