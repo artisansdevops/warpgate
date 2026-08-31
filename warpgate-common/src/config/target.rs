@@ -398,6 +398,18 @@ pub struct TargetKubernetesOptions {
 
     #[serde(default)]
     pub auth: KubernetesTargetAuth,
+
+    /// When set, every request impersonates the connecting Warpgate user via
+    /// Kubernetes' `Impersonate-User` mechanism instead of relying solely on
+    /// the `auth` credential's own identity. This lets cluster RBAC
+    /// (RoleBindings/ClusterRoleBindings) be granted per end user rather than
+    /// to one shared service account/certificate/IAM role.
+    ///
+    /// The credential in `auth` must itself be granted the `impersonate` verb
+    /// on the `users` resource (`rbac.authorization.k8s.io`) for the
+    /// cluster to accept the impersonated requests.
+    #[serde(default)]
+    pub impersonate_connecting_user: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Union)]

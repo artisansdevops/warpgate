@@ -441,13 +441,14 @@ async fn user_for_username(services: &Services, username: &str) -> poem::Result<
 
 pub async fn create_authenticated_client(
     k8s_options: &TargetKubernetesOptions,
-    _auth_user: Option<&String>,
+    auth_user: Option<&String>,
     _services: &Services,
 ) -> anyhow::Result<reqwest::ClientBuilder> {
     debug!(
         server_url = ?k8s_options.cluster_url,
         auth_kind = ?k8s_options.auth,
         tls_config = ?k8s_options.tls,
+        impersonate_connecting_user = k8s_options.impersonate_connecting_user,
         "Creating authenticated Kubernetes client"
     );
 
@@ -458,10 +459,14 @@ pub async fn create_authenticated_client(
         client_builder = client_builder.danger_accept_invalid_certs(true);
     }
 
+    // Collected into a single map and applied with one `default_headers` call so
+    // the credential's Authorization header and the impersonation header (set
+    // below) can't clobber each other.
+    let mut default_headers = reqwest::header::HeaderMap::new();
+
     match &k8s_options.auth {
         warpgate_common::KubernetesTargetAuth::Token(auth) => {
-            let mut headers = reqwest::header::HeaderMap::new();
-            headers.insert(
+            default_headers.insert(
                 reqwest::header::AUTHORIZATION,
                 reqwest::header::HeaderValue::from_str(&format!(
                     "Bearer {}",
@@ -469,7 +474,6 @@ pub async fn create_authenticated_client(
                 ))
                 .context("setting Authorization header")?,
             );
-            client_builder = client_builder.default_headers(headers);
         }
         warpgate_common::KubernetesTargetAuth::Certificate(auth) => {
             // Expect PEM certificate and PEM private key in the auth config
@@ -497,14 +501,27 @@ pub async fn create_authenticated_client(
                 .await
                 .context("EKS token generation")?;
 
-            let mut headers = reqwest::header::HeaderMap::new();
-            headers.insert(
+            default_headers.insert(
                 reqwest::header::AUTHORIZATION,
                 reqwest::header::HeaderValue::from_str(&format!("Bearer {token}"))
                     .context("setting Authorization header for EKS token")?,
             );
-            client_builder = client_builder.default_headers(headers);
         }
+    }
+
+    if k8s_options.impersonate_connecting_user {
+        let username = auth_user.context(
+            "Kubernetes target has impersonation enabled but no Warpgate user is available",
+        )?;
+        default_headers.insert(
+            reqwest::header::HeaderName::from_static("impersonate-user"),
+            reqwest::header::HeaderValue::from_str(username)
+                .context("setting Impersonate-User header")?,
+        );
+    }
+
+    if !default_headers.is_empty() {
+        client_builder = client_builder.default_headers(default_headers);
     }
 
     Ok(client_builder)

@@ -459,6 +459,7 @@ class TestKubernetesIntegration:
                                     kind="Token", token=k3s_token
                                 )
                             ),
+                            impersonate_connecting_user=False,
                         )
                     ),
                 )
@@ -606,6 +607,7 @@ class TestKubernetesIntegration:
                                     kind="Token", token=k3s_token
                                 )
                             ),
+                            impersonate_connecting_user=False,
                         )
                     ),
                 )
@@ -728,6 +730,7 @@ class TestKubernetesIntegration:
                                     kind="Token", token=k3s.token
                                 )
                             ),
+                            impersonate_connecting_user=False,
                         )
                     ),
                 )
@@ -997,6 +1000,7 @@ class TestKubernetesIntegration:
                                     private_key=mtls_key,
                                 )
                             ),
+                            impersonate_connecting_user=False,
                         )
                     ),
                 )
@@ -1362,6 +1366,7 @@ class TestKubernetesIntegration:
                                     kind="Token", token=k3s.token
                                 )
                             ),
+                            impersonate_connecting_user=False,
                         )
                     ),
                 )
@@ -1530,6 +1535,7 @@ class TestKubernetesIntegration:
                                     kind="Token", token=k3s.token
                                 )
                             ),
+                            impersonate_connecting_user=False,
                         )
                     ),
                 )

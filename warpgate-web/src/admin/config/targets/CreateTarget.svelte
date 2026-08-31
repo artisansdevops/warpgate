@@ -88,6 +88,7 @@
                         certificate: '',
                         privateKey: '',
                     },
+                    impersonateConnectingUser: false,
                 },
                 Vnc: {
                     kind: TargetKind.Vnc,

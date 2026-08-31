@@ -7164,7 +7164,8 @@
         "required": [
           "cluster_url",
           "tls",
-          "auth"
+          "auth",
+          "impersonate_connecting_user"
         ],
         "properties": {
           "cluster_url": {
@@ -7175,6 +7176,10 @@
           },
           "auth": {
             "$ref": "#/components/schemas/KubernetesTargetAuth"
+          },
+          "impersonate_connecting_user": {
+            "type": "boolean",
+            "description": "When set, every request impersonates the connecting Warpgate user via\nKubernetes' `Impersonate-User` mechanism instead of relying solely on\nthe `auth` credential's own identity. This lets cluster RBAC\n(RoleBindings/ClusterRoleBindings) be granted per end user rather than\nto one shared service account/certificate/IAM role.\n\nThe credential in `auth` must itself be granted the `impersonate` verb\non the `users` resource (`rbac.authorization.k8s.io`) for the\ncluster to accept the impersonated requests."
           }
         }
       },
