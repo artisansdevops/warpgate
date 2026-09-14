@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Warpgate Web Admin",
-    "version": "v0.29.0-beta.1.1-1-g2f77f07b-modified"
+    "version": "v0.29.0-beta.2-8-gf1653095"
   },
   "servers": [
     {
@@ -4893,6 +4893,71 @@
           }
         }
       },
+      "ConnectVia": {
+        "type": "object",
+        "description": "Where a target's `connect_via` reaches its backend through another\ntarget's connection, instead of a direct TCP connection.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ConnectVia_KubernetesTunnelOptions"
+          },
+          {
+            "$ref": "#/components/schemas/ConnectVia_SshTunnelOptions"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "Kubernetes": "#/components/schemas/ConnectVia_KubernetesTunnelOptions",
+            "Ssh": "#/components/schemas/ConnectVia_SshTunnelOptions"
+          }
+        }
+      },
+      "ConnectVia_KubernetesTunnelOptions": {
+        "description": "Where a target's `connect_via` reaches its backend through another\ntarget's connection, instead of a direct TCP connection.",
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "Kubernetes"
+                ],
+                "example": "Kubernetes"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/KubernetesTunnelOptions"
+          }
+        ]
+      },
+      "ConnectVia_SshTunnelOptions": {
+        "description": "Where a target's `connect_via` reaches its backend through another\ntarget's connection, instead of a direct TCP connection.",
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "Ssh"
+                ],
+                "example": "Ssh"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/SshTunnelOptions"
+          }
+        ]
+      },
       "CreateLdapServerRequest": {
         "type": "object",
         "title": "CreateLdapServerRequest",
@@ -5486,6 +5551,34 @@
         "properties": {
           "token": {
             "type": "string"
+          }
+        }
+      },
+      "KubernetesTunnelOptions": {
+        "type": "object",
+        "title": "KubernetesTunnelOptions",
+        "description": "Reaches a backend by port-forwarding through another (`Kubernetes`-kind)\ntarget's cluster API connection, resolving `service`/`port` to a live\nbacking pod at dial time — like `kubectl port-forward svc/x` does\nclient-side — instead of requiring Warpgate to have direct network\nreachability to the backend.",
+        "required": [
+          "kubernetes_target_id",
+          "namespace",
+          "service",
+          "port"
+        ],
+        "properties": {
+          "kubernetes_target_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The id of the `Kubernetes`-kind target whose cluster URL, auth and\nimpersonation settings are reused to open the port-forward."
+          },
+          "namespace": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer",
+            "format": "uint16"
           }
         }
       },
@@ -6995,6 +7088,30 @@
           }
         }
       },
+      "SshTunnelOptions": {
+        "type": "object",
+        "title": "SshTunnelOptions",
+        "description": "Reaches a backend by opening an SSH `direct-tcpip` channel (the same\nprimitive `ssh -L` uses) through another (`Ssh`-kind) target's connection\n— including through that target's own `jump_host` chain, if it has one —\ninstead of requiring Warpgate to have direct network reachability to the\nbackend. `host`/`port` are resolved from the SSH target's side, e.g. a\nservice bound to `127.0.0.1` on a VM only reachable by SSHing into it.",
+        "required": [
+          "ssh_target_id",
+          "host",
+          "port"
+        ],
+        "properties": {
+          "ssh_target_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The id of the `Ssh`-kind target whose host/auth (and jump chain, if\nany) are reused to open the tunnel."
+          },
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer",
+            "format": "uint16"
+          }
+        }
+      },
       "StaticCredentials": {
         "type": "object",
         "title": "StaticCredentials",
@@ -7248,6 +7365,9 @@
           },
           "default_database_name": {
             "type": "string"
+          },
+          "connect_via": {
+            "$ref": "#/components/schemas/ConnectVia"
           }
         }
       },
@@ -7280,6 +7400,9 @@
           },
           {
             "$ref": "#/components/schemas/TargetOptions_TargetRabbitMqOptions"
+          },
+          {
+            "$ref": "#/components/schemas/TargetOptions_TargetTcpOptions"
           }
         ],
         "discriminator": {
@@ -7293,7 +7416,8 @@
             "Vnc": "#/components/schemas/TargetOptions_TargetVncOptions",
             "Rdp": "#/components/schemas/TargetOptions_TargetRdpOptions",
             "Redis": "#/components/schemas/TargetOptions_TargetRedisOptions",
-            "RabbitMq": "#/components/schemas/TargetOptions_TargetRabbitMqOptions"
+            "RabbitMq": "#/components/schemas/TargetOptions_TargetRabbitMqOptions",
+            "Tcp": "#/components/schemas/TargetOptions_TargetTcpOptions"
           }
         }
       },
@@ -7473,6 +7597,28 @@
           }
         ]
       },
+      "TargetOptions_TargetTcpOptions": {
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "Tcp"
+                ],
+                "example": "Tcp"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/TargetTcpOptions"
+          }
+        ]
+      },
       "TargetOptions_TargetVncOptions": {
         "allOf": [
           {
@@ -7531,6 +7677,9 @@
           },
           "protocol_version": {
             "$ref": "#/components/schemas/PostgresProtocolVersion"
+          },
+          "connect_via": {
+            "$ref": "#/components/schemas/ConnectVia"
           }
         }
       },
@@ -7567,6 +7716,9 @@
           },
           "idle_timeout": {
             "type": "string"
+          },
+          "connect_via": {
+            "$ref": "#/components/schemas/ConnectVia"
           }
         }
       },
@@ -7657,6 +7809,9 @@
           "iam_region": {
             "type": "string",
             "description": "AWS region to sign the IAM auth token for, when `auth` is `IamRole`.\nUnlike RDS/EKS endpoints, ElastiCache/MemoryDB hostnames don't reliably\nembed a parseable region, so it must be given explicitly here."
+          },
+          "connect_via": {
+            "$ref": "#/components/schemas/ConnectVia"
           }
         }
       },
@@ -7741,6 +7896,41 @@
           "node_hostname": {
             "type": "string",
             "description": "Hostname of the serving node, while registered."
+          }
+        }
+      },
+      "TargetTcpOptions": {
+        "type": "object",
+        "title": "TargetTcpOptions",
+        "description": "A raw byte-relay target for protocols with no dedicated Warpgate support\n(arbitrary databases, message brokers, custom application protocols). No\napplication-level auth: whatever the protocol running over the connection\ndoes for authentication happens end-to-end between the client and the\nbackend, opaque to Warpgate.\n\nUnlike every other protocol, raw TCP has no in-band way to select which\ntarget a connection is for (no AUTH selector like Redis, no username\nscheme like MySQL/Postgres) - so each `Tcp` target binds its own dedicated\nlisten address rather than sharing one listener with other `Tcp` targets.\nAdding or editing a target's listen address currently requires a Warpgate\nrestart to take effect.",
+        "required": [
+          "host",
+          "port",
+          "tls",
+          "listen_address",
+          "listen_port"
+        ],
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "Used only as the TLS server name when `tls` is enabled and `connect_via`\nis unset; otherwise purely descriptive."
+          },
+          "port": {
+            "type": "integer",
+            "format": "uint16"
+          },
+          "tls": {
+            "$ref": "#/components/schemas/Tls"
+          },
+          "connect_via": {
+            "$ref": "#/components/schemas/ConnectVia"
+          },
+          "listen_address": {
+            "type": "string"
+          },
+          "listen_port": {
+            "type": "integer",
+            "format": "uint16"
           }
         }
       },

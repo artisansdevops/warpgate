@@ -57,6 +57,13 @@
             description: 'Expose access to an AMQP 0-9-1 message broker',
             experimental: true,
         },
+        {
+            name: 'TCP',
+            value: TargetKind.Tcp,
+            description:
+                'Relay any raw TCP-based protocol with no dedicated support above',
+            experimental: true,
+        },
     ]
 </script>
 

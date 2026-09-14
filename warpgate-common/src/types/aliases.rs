@@ -96,6 +96,7 @@ pub enum Protocol {
     Rdp,
     Redis,
     RabbitMq,
+    Tcp,
 }
 
 impl Protocol {
@@ -114,6 +115,7 @@ impl Protocol {
             Self::Rdp => "RDP",
             Self::Redis => "Redis",
             Self::RabbitMq => "RabbitMQ",
+            Self::Tcp => "TCP",
         }
     }
 }

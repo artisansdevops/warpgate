@@ -34,6 +34,7 @@
     import { replace } from 'svelte-spa-router'
     import TlsConfiguration from '../../TlsConfiguration.svelte'
     import HttpHeadersEditor from './http/HeadersEditor.svelte'
+    import ConnectVia from './ConnectVia.svelte'
     import ProtocolDocs from './ProtocolDocs.svelte'
     import TargetRdpOptions from './rdp/Options.svelte'
     import TargetSshOptions from './ssh/Options.svelte'
@@ -207,6 +208,9 @@
                             {#if target.options.kind === 'RabbitMq'}
                                 RabbitMQ target
                             {/if}
+                            {#if target.options.kind === 'Tcp'}
+                                TCP target
+                            {/if}
                         </div>
                     </div>
                 </div>
@@ -363,6 +367,10 @@
                             {/if}
 
                             <TlsConfiguration bind:value={target.options.tls} />
+
+                            <ConnectVia
+                                bind:connectVia={target.options.connectVia}
+                            />
                         {/if}
 
                         {#if target.options.kind === 'Kubernetes'}
@@ -581,6 +589,10 @@
                             </FormGroup>
 
                             <TlsConfiguration bind:value={target.options.tls} />
+
+                            <ConnectVia
+                                bind:connectVia={target.options.connectVia}
+                            />
                         {/if}
 
                         {#if target.options.kind === 'RabbitMq'}
@@ -643,6 +655,75 @@
                             </FormGroup>
 
                             <TlsConfiguration bind:value={target.options.tls} />
+
+                            <ConnectVia
+                                bind:connectVia={target.options.connectVia}
+                            />
+                        {/if}
+
+                        {#if target.options.kind === 'Tcp'}
+                            <div class="row">
+                                <div class="col-8">
+                                    <FormGroup floating label="Target host">
+                                        <input
+                                            class="form-control"
+                                            bind:value={target.options.host}
+                                        >
+                                    </FormGroup>
+                                </div>
+                                <div class="col-4">
+                                    <FormGroup floating label="Target port">
+                                        <input
+                                            class="form-control"
+                                            type="number"
+                                            bind:value={target.options.port}
+                                            min="1"
+                                            max="65535"
+                                            step="1"
+                                        >
+                                    </FormGroup>
+                                </div>
+                            </div>
+
+                            <TlsConfiguration bind:value={target.options.tls} />
+
+                            <ConnectVia
+                                bind:connectVia={target.options.connectVia}
+                            />
+
+                            <h5 class="mt-3">Listener</h5>
+                            <p class="text-muted small">
+                                Unlike other protocols, raw TCP has no way to
+                                select a target in-band, so this target binds
+                                its own dedicated listen address instead of
+                                sharing one with other TCP targets. Changing it
+                                requires a Warpgate restart to take effect.
+                            </p>
+                            <div class="row">
+                                <div class="col-8">
+                                    <FormGroup
+                                        floating
+                                        label="Listen address"
+                                    >
+                                        <input
+                                            class="form-control"
+                                            bind:value={target.options.listenAddress}
+                                        >
+                                    </FormGroup>
+                                </div>
+                                <div class="col-4">
+                                    <FormGroup floating label="Listen port">
+                                        <input
+                                            class="form-control"
+                                            type="number"
+                                            bind:value={target.options.listenPort}
+                                            min="1"
+                                            max="65535"
+                                            step="1"
+                                        >
+                                    </FormGroup>
+                                </div>
+                            </div>
                         {/if}
                     </Section>
 

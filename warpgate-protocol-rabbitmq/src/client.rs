@@ -4,9 +4,10 @@ use amq_protocol::frame::AMQPFrame;
 use amq_protocol::protocol::AMQPClass;
 use amq_protocol::protocol::connection::{self, AMQPMethod};
 use bytes::Bytes;
-use tokio::net::TcpStream;
 use tracing::info;
 use warpgate_common::{RabbitMqTargetAuth, TargetRabbitMqOptions, WarpgateError};
+use warpgate_core::Services;
+use warpgate_tunnel_client::BoxedStream;
 use warpgate_tls::{ClientTlsStream, MaybeTlsStream, TlsMode, configure_tls_connector};
 
 use crate::common::{OUR_CHANNEL_MAX, OUR_FRAME_MAX, OUR_HEARTBEAT};
@@ -14,7 +15,7 @@ use crate::error::RabbitMqError;
 use crate::wire::{long_string, peer_properties, read_frame, write_frame};
 
 pub struct RabbitMqClient {
-    pub stream: MaybeTlsStream<TcpStream, ClientTlsStream<TcpStream>>,
+    pub stream: MaybeTlsStream<BoxedStream, ClientTlsStream<BoxedStream>>,
 }
 
 impl RabbitMqClient {
@@ -25,11 +26,32 @@ impl RabbitMqClient {
     pub async fn connect(
         target: &TargetRabbitMqOptions,
         vhost: &str,
+        services: &Services,
+        connecting_username: Option<&str>,
     ) -> Result<Self, RabbitMqError> {
-        let tcp = TcpStream::connect((target.host.clone(), target.port)).await?;
-        tcp.set_nodelay(true)?;
+        let transport = warpgate_tunnel_client::dial_target(
+            &target.host,
+            target.port,
+            target.connect_via.as_ref(),
+            services,
+            connecting_username,
+        )
+        .await
+        .map_err(WarpgateError::from)?;
 
-        let mut stream = MaybeTlsStream::<TcpStream, ClientTlsStream<TcpStream>>::new(tcp);
+        Self::connect_over(transport, target, vhost).await
+    }
+
+    /// Completes the AMQP handshake over an already-dialed transport - split
+    /// out from [`Self::connect`] so tests can exercise the handshake against
+    /// a plain `TcpStream` without needing a full `Services` just to satisfy
+    /// `dial_target`'s signature.
+    pub async fn connect_over(
+        transport: BoxedStream,
+        target: &TargetRabbitMqOptions,
+        vhost: &str,
+    ) -> Result<Self, RabbitMqError> {
+        let mut stream = MaybeTlsStream::<BoxedStream, ClientTlsStream<BoxedStream>>::new(transport);
 
         if target.tls.mode != TlsMode::Disabled {
             let accept_invalid_certs = !target.tls.verify;
@@ -184,7 +206,7 @@ fn negotiate_tune(target: &connection::Tune) -> (u16, u32, u16) {
 #[cfg(test)]
 mod tests {
     use amq_protocol::types::FieldTable;
-    use tokio::net::TcpListener;
+    use tokio::net::{TcpListener, TcpStream};
     use warpgate_common::{DatabaseTargetPasswordAuth, StoredSecret, Tls};
     use warpgate_tls::TlsMode;
 
@@ -284,9 +306,11 @@ mod tests {
             },
             default_vhost: None,
             idle_timeout: None,
+            connect_via: None,
         };
 
-        RabbitMqClient::connect(&options, "/my-vhost")
+        let tcp = TcpStream::connect(addr).await.unwrap();
+        RabbitMqClient::connect_over(BoxedStream::new(tcp), &options, "/my-vhost")
             .await
             .expect("handshake should succeed");
         server.await.unwrap();

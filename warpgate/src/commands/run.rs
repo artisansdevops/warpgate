@@ -25,6 +25,7 @@ use warpgate_protocol_rabbitmq::RabbitMqProtocolServer;
 use warpgate_protocol_rdp::RdpProtocolServer;
 use warpgate_protocol_redis::RedisProtocolServer;
 use warpgate_protocol_ssh::SSHProtocolServer;
+use warpgate_protocol_tcp::TcpProtocolServer;
 use warpgate_protocol_vnc::VncProtocolServer;
 
 use crate::config::{load_config, watch_config};
@@ -254,6 +255,18 @@ pub async fn command(params: &GlobalParams, enable_admin_token: bool) -> Result<
         rabbitmq,
         false
     ));
+
+    // `Tcp` targets each bind their own dedicated listener (see
+    // `TargetTcpOptions`) instead of sharing one supervised endpoint like
+    // every other protocol, so they're bound once here rather than through
+    // `spawn_supervisor`. Adding/editing one currently requires a restart.
+    for accept_loop in TcpProtocolServer::bind_all(&services).await? {
+        supervisors.push(tokio::spawn(async move {
+            if let Err(error) = accept_loop.await {
+                error!(?error, "TCP target listener failed");
+            }
+        }));
+    }
 
     tokio::spawn({
         let services = services.clone();

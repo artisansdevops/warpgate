@@ -160,6 +160,15 @@ pub struct TargetMySqlOptions {
 
     #[serde(default)]
     pub default_database_name: Option<String>,
+
+    // When set, `host`/`port` are only used as the TLS server name and the
+    // actual connection is a tunnel through another target (Kubernetes
+    // port-forward, or SSH `direct-tcpip`). Kept as a plain comment, not a
+    // doc comment: poem-openapi wraps a documented `Union` field in `allOf`,
+    // which the TS generator can't turn into a valid `extends` (see the
+    // same note on `TargetRdpOptions::tls_security`).
+    #[serde(default)]
+    pub connect_via: Option<ConnectVia>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq, Default, Enum)]
@@ -198,6 +207,15 @@ pub struct TargetPostgresOptions {
 
     #[serde(default)]
     pub protocol_version: PostgresProtocolVersion,
+
+    // When set, `host`/`port` are only used as the TLS server name and the
+    // actual connection is a tunnel through another target (Kubernetes
+    // port-forward, or SSH `direct-tcpip`). Kept as a plain comment, not a
+    // doc comment: poem-openapi wraps a documented `Union` field in `allOf`,
+    // which the TS generator can't turn into a valid `extends` (see the
+    // same note on `TargetRdpOptions::tls_security`).
+    #[serde(default)]
+    pub connect_via: Option<ConnectVia>,
 }
 
 /// Which AWS service to sign the IAM auth token for. Redis has no RDS
@@ -268,6 +286,15 @@ pub struct TargetRedisOptions {
     /// embed a parseable region, so it must be given explicitly here.
     #[serde(default)]
     pub iam_region: Option<String>,
+
+    // When set, `host`/`port` are only used as the TLS server name and the
+    // actual connection is a tunnel through another target (Kubernetes
+    // port-forward, or SSH `direct-tcpip`). Kept as a plain comment, not a
+    // doc comment: poem-openapi wraps a documented `Union` field in `allOf`,
+    // which the TS generator can't turn into a valid `extends` (see the
+    // same note on `TargetRdpOptions::tls_security`).
+    #[serde(default)]
+    pub connect_via: Option<ConnectVia>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Union)]
@@ -310,6 +337,52 @@ pub struct TargetRabbitMqOptions {
 
     #[serde(default)]
     pub idle_timeout: Option<String>,
+
+    // When set, `host`/`port` are only used as the TLS server name and the
+    // actual connection is a tunnel through another target (Kubernetes
+    // port-forward, or SSH `direct-tcpip`). Kept as a plain comment, not a
+    // doc comment: poem-openapi wraps a documented `Union` field in `allOf`,
+    // which the TS generator can't turn into a valid `extends` (see the
+    // same note on `TargetRdpOptions::tls_security`).
+    #[serde(default)]
+    pub connect_via: Option<ConnectVia>,
+}
+
+/// A raw byte-relay target for protocols with no dedicated Warpgate support
+/// (arbitrary databases, message brokers, custom application protocols). No
+/// application-level auth: whatever the protocol running over the connection
+/// does for authentication happens end-to-end between the client and the
+/// backend, opaque to Warpgate.
+///
+/// Unlike every other protocol, raw TCP has no in-band way to select which
+/// target a connection is for (no AUTH selector like Redis, no username
+/// scheme like MySQL/Postgres) - so each `Tcp` target binds its own dedicated
+/// listen address rather than sharing one listener with other `Tcp` targets.
+/// Adding or editing a target's listen address currently requires a Warpgate
+/// restart to take effect.
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Object)]
+pub struct TargetTcpOptions {
+    /// Used only as the TLS server name when `tls` is enabled and `connect_via`
+    /// is unset; otherwise purely descriptive.
+    #[serde(default = "_default_empty_string")]
+    pub host: String,
+
+    pub port: u16,
+
+    #[serde(default)]
+    pub tls: Tls,
+
+    #[serde(default)]
+    pub connect_via: Option<ConnectVia>,
+
+    #[serde(default = "_default_tcp_listen_address")]
+    pub listen_address: String,
+
+    pub listen_port: u16,
+}
+
+fn _default_tcp_listen_address() -> String {
+    "0.0.0.0".to_owned()
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Object)]
@@ -431,6 +504,48 @@ impl Default for RdpTargetAuth {
     }
 }
 
+/// Reaches a backend by port-forwarding through another (`Kubernetes`-kind)
+/// target's cluster API connection, resolving `service`/`port` to a live
+/// backing pod at dial time — like `kubectl port-forward svc/x` does
+/// client-side — instead of requiring Warpgate to have direct network
+/// reachability to the backend.
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Object)]
+pub struct KubernetesTunnelOptions {
+    /// The id of the `Kubernetes`-kind target whose cluster URL, auth and
+    /// impersonation settings are reused to open the port-forward.
+    pub kubernetes_target_id: Uuid,
+    pub namespace: String,
+    pub service: String,
+    pub port: u16,
+}
+
+/// Reaches a backend by opening an SSH `direct-tcpip` channel (the same
+/// primitive `ssh -L` uses) through another (`Ssh`-kind) target's connection
+/// — including through that target's own `jump_host` chain, if it has one —
+/// instead of requiring Warpgate to have direct network reachability to the
+/// backend. `host`/`port` are resolved from the SSH target's side, e.g. a
+/// service bound to `127.0.0.1` on a VM only reachable by SSHing into it.
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Object)]
+pub struct SshTunnelOptions {
+    /// The id of the `Ssh`-kind target whose host/auth (and jump chain, if
+    /// any) are reused to open the tunnel.
+    pub ssh_target_id: Uuid,
+    pub host: String,
+    pub port: u16,
+}
+
+/// Where a target's `connect_via` reaches its backend through another
+/// target's connection, instead of a direct TCP connection.
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Union)]
+#[serde(tag = "kind")]
+#[oai(discriminator_name = "kind", one_of)]
+pub enum ConnectVia {
+    #[serde(rename = "kubernetes")]
+    Kubernetes(KubernetesTunnelOptions),
+    #[serde(rename = "ssh")]
+    Ssh(SshTunnelOptions),
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Object)]
 pub struct TargetKubernetesOptions {
     #[serde(default = "_default_empty_string")]
@@ -521,6 +636,8 @@ pub enum TargetOptions {
     Redis(TargetRedisOptions),
     #[serde(rename = "rabbitmq")]
     RabbitMq(TargetRabbitMqOptions),
+    #[serde(rename = "tcp")]
+    Tcp(TargetTcpOptions),
 }
 
 impl TargetOptions {
@@ -535,6 +652,7 @@ impl TargetOptions {
             TargetOptions::Rdp(_) => Protocol::Rdp,
             TargetOptions::Redis(_) => Protocol::Redis,
             TargetOptions::RabbitMq(_) => Protocol::RabbitMq,
+            TargetOptions::Tcp(_) => Protocol::Tcp,
         }
     }
 

@@ -4,11 +4,10 @@ use bytes::Bytes;
 use rsa::pkcs8::DecodePublicKey;
 use rsa::{Oaep, RsaPublicKey};
 use sha1::Sha1;
-use tokio::net::TcpStream;
 use tracing::{debug, info};
 use warpgate_common::helpers::rng::get_crypto_rng;
 use warpgate_common::{TargetMySqlOptions, WarpgateError};
-use warpgate_core::AdmittedTarget;
+use warpgate_core::Services;
 use warpgate_database_protocols::io::Decode;
 use warpgate_database_protocols::mysql::protocol::Capabilities;
 use warpgate_database_protocols::mysql::protocol::auth::AuthPlugin;
@@ -17,13 +16,14 @@ use warpgate_database_protocols::mysql::protocol::connect::{
 };
 use warpgate_database_protocols::mysql::protocol::response::ErrPacket;
 use warpgate_tls::{ClientTlsStream, TlsMode, configure_tls_connector};
+use warpgate_tunnel_client::BoxedStream;
 
 use crate::common::{compute_auth_challenge_response, compute_sha2_auth_challenge_response};
 use crate::error::MySqlError;
 use crate::stream::MySqlStream;
 
 pub struct MySqlClient {
-    pub stream: MySqlStream<TcpStream, ClientTlsStream<TcpStream>>,
+    pub stream: MySqlStream<BoxedStream, ClientTlsStream<BoxedStream>>,
     /// Negotiated with the target. A subset of what the client negotiated with
     /// us, except for `SSL`, which is settled per target connection and says
     /// nothing about the client's.
@@ -39,14 +39,34 @@ pub struct ConnectionOptions {
 
 impl MySqlClient {
     pub async fn connect(
-        approved: AdmittedTarget<TargetMySqlOptions>,
+        target: &TargetMySqlOptions,
+        options: ConnectionOptions,
+        services: &Services,
+        connecting_username: Option<&str>,
+    ) -> Result<Self, MySqlError> {
+        let transport = warpgate_tunnel_client::dial_target(
+            &target.host,
+            target.port,
+            target.connect_via.as_ref(),
+            services,
+            connecting_username,
+        )
+        .await
+        .map_err(WarpgateError::from)?;
+
+        Self::connect_over(transport, target, options).await
+    }
+
+    /// Completes the MySQL handshake over an already-dialed transport - split
+    /// out from [`Self::connect`] so tests can exercise the handshake against
+    /// a plain `TcpStream` without needing a full `Services` just to satisfy
+    /// `dial_target`'s signature.
+    pub async fn connect_over(
+        transport: BoxedStream,
+        target: &TargetMySqlOptions,
         mut options: ConnectionOptions,
     ) -> Result<Self, MySqlError> {
-        let target = approved.specific_target().options().clone();
-        let stream = TcpStream::connect((target.host.clone(), target.port)).await?;
-        stream.set_nodelay(true)?;
-
-        let mut stream = MySqlStream::new(stream);
+        let mut stream = MySqlStream::new(transport);
 
         options.capabilities.remove(Capabilities::SSL);
         if target.tls.mode != TlsMode::Disabled {
@@ -261,7 +281,7 @@ fn auth_response(
 /// RSA with a public key requested from the server
 /// https://dev.mysql.com/doc/dev/mysql-server/latest/page_caching_sha2_authentication_exchanges.html
 async fn caching_sha2_full_auth(
-    stream: &mut MySqlStream<TcpStream, ClientTlsStream<TcpStream>>,
+    stream: &mut MySqlStream<BoxedStream, ClientTlsStream<BoxedStream>>,
     nonce: &[u8],
     password: &str,
 ) -> Result<Vec<u8>, MySqlError> {

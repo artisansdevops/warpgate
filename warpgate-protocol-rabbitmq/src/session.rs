@@ -214,6 +214,7 @@ impl<S: AsyncRead + AsyncWrite + Send + Unpin> RabbitMqSession<S> {
         admitted: AdmittedTarget<TargetRabbitMqOptions>,
     ) -> Result<(), RabbitMqError> {
         let options = admitted.specific_target().options().clone();
+        let connecting_username = admitted.user_info().username.clone();
         match read_frame(&mut self.stream).await? {
             AMQPFrame::Method(0, AMQPClass::Connection(AMQPMethod::TuneOk(_))) => {}
             _ => {
@@ -233,14 +234,18 @@ impl<S: AsyncRead + AsyncWrite + Send + Unpin> RabbitMqSession<S> {
         };
         let vhost = open.virtual_host.as_str().to_owned();
 
-        let mut client = match RabbitMqClient::connect(&options, &vhost).await {
-            Err(error) => {
-                self.send_close(541, "INTERNAL_ERROR - Warpgate target connection failed")
-                    .await?;
-                Err(error)
-            }
-            x => x,
-        }?;
+        let services = self.services.clone();
+        let mut client =
+            match RabbitMqClient::connect(&options, &vhost, &services, Some(&connecting_username))
+                .await
+            {
+                Err(error) => {
+                    self.send_close(541, "INTERNAL_ERROR - Warpgate target connection failed")
+                        .await?;
+                    Err(error)
+                }
+                x => x,
+            }?;
 
         write_frame(&mut self.stream, &open_ok_frame()).await?;
 

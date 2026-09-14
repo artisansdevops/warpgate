@@ -32,7 +32,6 @@ tokio-tungstenite.workspace = true
 tracing.workspace = true
 url.workspace = true
 uuid.workspace = true
-warpgate-aws = { path = "../warpgate-aws", default-features = false }
 warpgate-ca = { path = "../warpgate-ca", default-features = false }
 warpgate-common = { path = "../warpgate-common", default-features = false }
 warpgate-common-http = { path = "../warpgate-common-http", default-features = false }
@@ -40,6 +39,7 @@ warpgate-core = { path = "../warpgate-core", default-features = false }
 warpgate-db-entities = { path = "../warpgate-db-entities", default-features = false }
 warpgate-sso = { path = "../warpgate-sso", default-features = false }
 warpgate-tls = { path = "../warpgate-tls", default-features = false }
+warpgate-tunnel-client = { path = "../warpgate-tunnel-client", default-features = false }
 
 [dev-dependencies]
 rcgen.workspace = true

@@ -329,7 +329,8 @@ impl Model {
                 | Protocol::Postgres
                 | Protocol::Kubernetes
                 | Protocol::Redis
-                | Protocol::RabbitMq,
+                | Protocol::RabbitMq
+                | Protocol::Tcp,
             ) => Some(CredentialKind::WebUserApproval),
         }
     }

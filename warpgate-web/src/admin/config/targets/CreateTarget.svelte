@@ -139,6 +139,17 @@
                         password: '',
                     },
                 },
+                Tcp: {
+                    kind: TargetKind.Tcp,
+                    host: '192.168.0.1',
+                    port: 0,
+                    tls: {
+                        mode: TlsMode.Disabled,
+                        verify: true,
+                    },
+                    listenAddress: '0.0.0.0',
+                    listenPort: 0,
+                },
             }[params.kind]
             if (!options) {
                 return

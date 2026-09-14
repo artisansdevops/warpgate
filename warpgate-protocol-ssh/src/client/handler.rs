@@ -9,7 +9,8 @@ use warpgate_core::Services;
 use warpgate_db_entities::Parameters;
 use warpgate_db_entities::Parameters::SshHostKeyVerificationMode;
 
-use crate::known_hosts::{KnownHostValidationResult, KnownHosts};
+use warpgate_ssh_client::known_hosts::{KnownHostValidationResult, KnownHosts};
+
 use crate::{ConnectionError, ForwardedStreamlocalParams, ForwardedTcpIpParams};
 
 #[derive(Debug)]

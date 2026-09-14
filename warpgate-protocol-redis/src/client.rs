@@ -4,24 +4,36 @@ use bytes::Bytes;
 use futures::{SinkExt, StreamExt};
 use redis_protocol::codec::Resp3;
 use redis_protocol::resp3::types::BytesFrame;
-use tokio::net::TcpStream;
 use tokio_util::codec::Framed;
 use tracing::info;
 use warpgate_common::{RedisIamAuthService, RedisTargetAuth, TargetRedisOptions, WarpgateError};
+use warpgate_core::Services;
+use warpgate_tunnel_client::BoxedStream;
 use warpgate_tls::{ClientTlsStream, MaybeTlsStream, TlsMode, configure_tls_connector};
 
 use crate::error::RedisError;
 
 pub struct RedisClient {
-    framed: Framed<MaybeTlsStream<TcpStream, ClientTlsStream<TcpStream>>, Resp3>,
+    framed: Framed<MaybeTlsStream<BoxedStream, ClientTlsStream<BoxedStream>>, Resp3>,
 }
 
 impl RedisClient {
-    pub async fn connect(target: &TargetRedisOptions) -> Result<Self, RedisError> {
-        let tcp = TcpStream::connect((target.host.clone(), target.port)).await?;
-        tcp.set_nodelay(true)?;
+    pub async fn connect(
+        target: &TargetRedisOptions,
+        services: &Services,
+        connecting_username: Option<&str>,
+    ) -> Result<Self, RedisError> {
+        let transport = warpgate_tunnel_client::dial_target(
+            &target.host,
+            target.port,
+            target.connect_via.as_ref(),
+            services,
+            connecting_username,
+        )
+        .await
+        .map_err(WarpgateError::from)?;
 
-        let mut stream = MaybeTlsStream::<TcpStream, ClientTlsStream<TcpStream>>::new(tcp);
+        let mut stream = MaybeTlsStream::<BoxedStream, ClientTlsStream<BoxedStream>>::new(transport);
 
         if target.tls.mode != TlsMode::Disabled {
             let accept_invalid_certs = !target.tls.verify;
@@ -122,7 +134,7 @@ impl RedisClient {
 }
 
 async fn expect_ok(
-    framed: &mut Framed<MaybeTlsStream<TcpStream, ClientTlsStream<TcpStream>>, Resp3>,
+    framed: &mut Framed<MaybeTlsStream<BoxedStream, ClientTlsStream<BoxedStream>>, Resp3>,
     command: &str,
 ) -> Result<(), RedisError> {
     match framed.next().await {

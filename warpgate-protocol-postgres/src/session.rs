@@ -355,17 +355,21 @@ impl<S: AsyncRead + AsyncWrite + Send + Unpin> PostgresSession<S> {
         admitted: AdmittedTarget<TargetPostgresOptions>,
     ) -> Result<(), PostgresError> {
         let options = admitted.options().clone();
+        let connecting_username = admitted.user_info().username.clone();
         let target_protocol_version = match options.protocol_version {
             PostgresProtocolVersion::V3_0 => ProtocolVersion::PROTOCOL3_0,
             PostgresProtocolVersion::V3_2 => ProtocolVersion::PROTOCOL3_2,
         };
 
+        let services = self.services.clone();
         let mut client = match PostgresClient::connect(
             admitted,
             ConnectionOptions {
                 protocol_version: target_protocol_version,
                 parameters: startup.parameters,
             },
+            &services,
+            Some(&connecting_username),
         )
         .await
         {

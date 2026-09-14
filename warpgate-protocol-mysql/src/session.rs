@@ -282,20 +282,25 @@ impl<S: AsyncRead + AsyncWrite + Send + Unpin> MySqlSession<S> {
         handshake: HandshakeResponse,
         admitted: AdmittedTarget<TargetMySqlOptions>,
     ) -> Result<(), MySqlError> {
+        let options = admitted.specific_target().options().clone();
+        let connecting_username = admitted.user_info().username.clone();
         self.database = handshake.database.clone();
         self.username = Some(handshake.username);
         if let Some(ref database) = handshake.database {
             info!("Selected database: {database}");
         }
 
+        let services = self.services.clone();
         let mut client = match MySqlClient::connect(
-            admitted,
+            &options,
             ConnectionOptions {
                 collation: handshake.collation,
                 database: handshake.database,
                 max_packet_size: handshake.max_packet_size,
                 capabilities: self.capabilities,
             },
+            &services,
+            Some(&connecting_username),
         )
         .await
         {
