@@ -3,7 +3,6 @@ mod client;
 mod command_detector;
 mod common;
 mod keys;
-pub mod known_hosts;
 mod server;
 use std::fmt::Debug;
 

@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Warpgate HTTP proxy",
-    "version": "v0.28.0-75-g7ef93f81-modified"
+    "version": "v0.29.0-beta.2-8-gf1653095-modified"
   },
   "servers": [
     {
@@ -2631,7 +2631,8 @@
           "Vnc",
           "Rdp",
           "Redis",
-          "RabbitMq"
+          "RabbitMq",
+          "Tcp"
         ]
       },
       "TargetSnapshot": {

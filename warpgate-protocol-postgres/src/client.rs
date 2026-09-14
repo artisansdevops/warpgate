@@ -6,17 +6,17 @@ use std::sync::Arc;
 use pgwire::messages::{DecodeContext, PgWireBackendMessage, ProtocolVersion};
 use rsasl::config::SASLConfig;
 use rsasl::prelude::{Mechname, SASLClient};
-use tokio::net::TcpStream;
 use tracing::{debug, info, warn};
 use warpgate_common::{TargetPostgresOptions, WarpgateError};
-use warpgate_core::AdmittedTarget;
+use warpgate_core::{AdmittedTarget, Services};
 use warpgate_tls::{ClientTlsStream, TlsMode, configure_tls_connector};
+use warpgate_tunnel_client::BoxedStream;
 
 use crate::error::PostgresError;
 use crate::stream::{PgWireGenericBackendMessage, PostgresEncode, PostgresStream};
 
 pub struct PostgresClient {
-    pub stream: PostgresStream<TcpStream, ClientTlsStream<TcpStream>>,
+    pub stream: PostgresStream<BoxedStream, ClientTlsStream<BoxedStream>>,
     decode_context: DecodeContext,
 }
 
@@ -59,12 +59,33 @@ impl PostgresClient {
     pub async fn connect(
         admitted: AdmittedTarget<TargetPostgresOptions>,
         options: ConnectionOptions,
+        services: &Services,
+        connecting_username: Option<&str>,
     ) -> Result<Self, PostgresError> {
         let target = admitted.specific_target().options().clone();
-        let stream = TcpStream::connect((target.host.clone(), target.port)).await?;
-        stream.set_nodelay(true)?;
+        let transport = warpgate_tunnel_client::dial_target(
+            &target.host,
+            target.port,
+            target.connect_via.as_ref(),
+            services,
+            connecting_username,
+        )
+        .await
+        .map_err(WarpgateError::from)?;
 
-        let mut stream = PostgresStream::new(stream);
+        Self::connect_over(transport, &target, options).await
+    }
+
+    /// Completes the Postgres handshake over an already-dialed transport -
+    /// split out from [`Self::connect`] so tests can exercise the handshake
+    /// against a plain `TcpStream` without needing a full `Services` just to
+    /// satisfy `dial_target`'s signature.
+    pub async fn connect_over(
+        transport: BoxedStream,
+        target: &TargetPostgresOptions,
+        options: ConnectionOptions,
+    ) -> Result<Self, PostgresError> {
+        let mut stream = PostgresStream::new(transport);
         let mut ctx = DecodeContext::new(options.protocol_version);
 
         if target.tls.mode != TlsMode::Disabled {
@@ -209,7 +230,7 @@ impl PostgresClient {
     }
 
     async fn run_sasl_auth(
-        stream: &mut PostgresStream<TcpStream, ClientTlsStream<TcpStream>>,
+        stream: &mut PostgresStream<BoxedStream, ClientTlsStream<BoxedStream>>,
         mechanisms: Vec<String>,
         username: &str,
         password: &str,

@@ -27,6 +27,10 @@ dhat-heap.json
 .idea/
 /.data/
 
+# Client-specific local test scaffold - real hostnames/topology, must never
+# reach this (public, upstream-bound) fork. See its README for why.
+/docker/local-testing/descours-cabaud/
+
 
 cdx.xml
 *.cdx.xml

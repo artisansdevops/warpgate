@@ -243,14 +243,17 @@ impl<S: AsyncRead + AsyncWrite + Send + Unpin> RedisSession<S> {
         admitted: AdmittedTarget<TargetRedisOptions>,
     ) -> Result<(), RedisError> {
         let options = admitted.specific_target().options().clone();
-        let mut client = match RedisClient::connect(&options).await {
-            Err(error) => {
-                self.send_error("ERR Warpgate target connection failed")
-                    .await?;
-                Err(error)
-            }
-            x => x,
-        }?;
+        let connecting_username = admitted.user_info().username.clone();
+        let services = self.services.clone();
+        let mut client =
+            match RedisClient::connect(&options, &services, Some(&connecting_username)).await {
+                Err(error) => {
+                    self.send_error("ERR Warpgate target connection failed")
+                        .await?;
+                    Err(error)
+                }
+                x => x,
+            }?;
 
         let idle_timeout = match parse_idle_timeout(options.idle_timeout.as_deref()) {
             IdlePolicy::Disabled => None,

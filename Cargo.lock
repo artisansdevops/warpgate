@@ -9051,6 +9051,7 @@ dependencies = [
  "warpgate-protocol-rdp",
  "warpgate-protocol-redis",
  "warpgate-protocol-ssh",
+ "warpgate-protocol-tcp",
  "warpgate-protocol-vnc",
  "warpgate-tls",
 ]
@@ -9444,7 +9445,6 @@ dependencies = [
  "tracing",
  "url",
  "uuid",
- "warpgate-aws",
  "warpgate-ca",
  "warpgate-common",
  "warpgate-common-http",
@@ -9452,6 +9452,7 @@ dependencies = [
  "warpgate-db-entities",
  "warpgate-sso",
  "warpgate-tls",
+ "warpgate-tunnel-client",
 ]
 
 [[package]]
@@ -9481,6 +9482,7 @@ dependencies = [
  "warpgate-core",
  "warpgate-database-protocols",
  "warpgate-tls",
+ "warpgate-tunnel-client",
  "webpki",
 ]
 
@@ -9511,6 +9513,7 @@ dependencies = [
  "warpgate-core",
  "warpgate-db-entities",
  "warpgate-tls",
+ "warpgate-tunnel-client",
 ]
 
 [[package]]
@@ -9535,6 +9538,7 @@ dependencies = [
  "warpgate-common-http",
  "warpgate-core",
  "warpgate-tls",
+ "warpgate-tunnel-client",
 ]
 
 [[package]]
@@ -9589,6 +9593,7 @@ dependencies = [
  "warpgate-common-http",
  "warpgate-core",
  "warpgate-tls",
+ "warpgate-tunnel-client",
 ]
 
 [[package]]
@@ -9624,8 +9629,24 @@ dependencies = [
  "warpgate-core",
  "warpgate-db-entities",
  "warpgate-db-migrations",
+ "warpgate-ssh-client",
  "warpgate-tls",
  "zeroize",
+]
+
+[[package]]
+name = "warpgate-protocol-tcp"
+version = "0.28.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "futures",
+ "tokio",
+ "tracing",
+ "warpgate-common",
+ "warpgate-core",
+ "warpgate-tls",
+ "warpgate-tunnel-client",
 ]
 
 [[package]]
@@ -9655,6 +9676,22 @@ dependencies = [
  "warpgate-desktop-auth",
  "warpgate-desktop-ui",
  "warpgate-tls",
+]
+
+[[package]]
+name = "warpgate-ssh-client"
+version = "0.28.0"
+dependencies = [
+ "anyhow",
+ "russh",
+ "sea-orm",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+ "uuid",
+ "warpgate-common",
+ "warpgate-core",
+ "warpgate-db-entities",
 ]
 
 [[package]]
@@ -9697,6 +9734,27 @@ dependencies = [
  "warpgate-ca",
  "webpki",
  "x509-parser",
+]
+
+[[package]]
+name = "warpgate-tunnel-client"
+version = "0.28.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "futures",
+ "reqwest 0.13.4",
+ "reqwest-websocket",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "url",
+ "uuid",
+ "warpgate-aws",
+ "warpgate-common",
+ "warpgate-core",
+ "warpgate-ssh-client",
 ]
 
 [[package]]
