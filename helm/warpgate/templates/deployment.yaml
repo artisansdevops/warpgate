@@ -189,6 +189,11 @@ spec:
               containerPort: {{ .Values.setup.kubernetes }}
               protocol: TCP
             {{- end }}
+            {{- range .Values.service.extraPorts }}
+            - name: {{ .name }}
+              containerPort: {{ .port }}
+              protocol: TCP
+            {{- end }}
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

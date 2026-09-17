@@ -71,5 +71,11 @@ spec:
       name: kubernetes
     {{- end }}
     {{- end }}
+    {{- range .Values.service.extraPorts }}
+    - port: {{ .port }}
+      targetPort: {{ .name }}
+      protocol: TCP
+      name: {{ .name }}
+    {{- end }}
   selector:
     {{- include "warpgate.selectorLabels" . | nindent 4 }}

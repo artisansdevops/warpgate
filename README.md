@@ -28,12 +28,13 @@
 
 ---
 
-Warpgate is a smart & fully transparent SSH, HTTPS, Kubernetes, MySQL, PostgreSQL, Redis, RabbitMQ, RDP and VNC bastion host that doesn't require a client app or an SSH wrapper.
+Warpgate is a smart & fully transparent SSH, HTTPS, Kubernetes, MySQL, PostgreSQL, Redis, RabbitMQ, generic TCP, RDP and VNC bastion host that doesn't require a client app or an SSH wrapper.
 
 * Set it up in your DMZ, add user accounts and easily assign them to specific hosts and URLs within the network.
 * Warpgate will record every session for you to view (live) and replay later through a built-in admin web UI.
 * Browser-based SSH, RDP and VNC access is built in; native clients continue to work.
 * Not a jump host - forwards connection straight to the target in a way that's fully transparent to the client.
+* Targets can also reach their backend through another target's own connection (an SSH jump chain, or a Kubernetes target's port-forward) instead of requiring Warpgate to have direct network reachability to it.
 * Native 2FA and SSO support (TOTP & OpenID Connect)
 * Built-in brute-force protection with IP blocking and user lockout
 * Single binary with no dependencies.
@@ -102,7 +103,7 @@ What's planned and being worked on next is tracked on the public [roadmap](https
 
 ## How it works
 
-Warpgate is a service that you deploy on the bastion/DMZ host, which will accept SSH, HTTPS, Kubernetes, MySQL, PostgreSQL, Redis, RabbitMQ, RDP and VNC connections and provide an (optional) web admin UI.
+Warpgate is a service that you deploy on the bastion/DMZ host, which will accept SSH, HTTPS, Kubernetes, MySQL, PostgreSQL, Redis, RabbitMQ, generic TCP, RDP and VNC connections and provide an (optional) web admin UI.
 
 Run `warpgate setup` to interactively generate a config file, including port bindings. See [Getting started](https://warpgate.null.page/getting-started/) for details.
 

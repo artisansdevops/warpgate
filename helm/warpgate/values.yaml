@@ -198,6 +198,17 @@ service:
     kubernetes: 0
     # kubernetes: 6443
 
+  # `Tcp`-kind targets (see TargetTcpOptions) each bind their own dedicated
+  # listen_port, chosen per-target in the admin UI/API rather than at deploy
+  # time - unlike the fixed protocol ports above, the chart can't know them
+  # ahead of time. List one entry per such target here so it's exposed on
+  # both the container and this Service; the port number must match the
+  # target's configured listen_port.
+  extraPorts: []
+  # extraPorts:
+  #   - name: memcached
+  #     port: 11211
+
 # Ingress configuration
 ingress:
   enabled: false
