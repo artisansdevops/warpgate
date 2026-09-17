@@ -1,0 +1,73 @@
+# Full stack in Docker: builds Warpgate from the current branch (docker/Dockerfile)
+# and proxies to two real RabbitMQ containers, to exercise the new RabbitMQ
+# target support.
+services:
+  # Unlike Redis, RabbitMQ always requires authentication - there's no
+  # unauthenticated "default user" that's reachable off-loopback (the builtin
+  # `guest` account is restricted to localhost connections). So both backends
+  # here get their own dedicated credentials via RABBITMQ_DEFAULT_USER/PASS,
+  # rather than one open + one ACL'd backend like the Redis harness does.
+  rabbitmq-target:
+    image: rabbitmq:4-alpine
+    container_name: wg-rabbitmq-target
+    environment:
+      RABBITMQ_DEFAULT_USER: wguser
+      RABBITMQ_DEFAULT_PASS: wgpassword123
+    # Not published to the host - only reachable from the warpgate container,
+    # as `rabbitmq-target:5672`, the same way a real backend would be.
+    expose:
+      - "5672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    restart: unless-stopped
+
+  # A second backend with its own distinct credentials and default vhost, to
+  # exercise TargetRabbitMqOptions.username/auth/default_vhost against a
+  # different backend identity than the first target.
+  rabbitmq-target-second:
+    image: rabbitmq:4-alpine
+    container_name: wg-rabbitmq-target-second
+    environment:
+      RABBITMQ_DEFAULT_USER: wguser2
+      RABBITMQ_DEFAULT_PASS: wgpassword456
+      RABBITMQ_DEFAULT_VHOST: /wgvhost
+    expose:
+      - "5672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    restart: unless-stopped
+
+  warpgate:
+    build:
+      context: ../../..
+      dockerfile: docker/Dockerfile
+    container_name: wg-rabbitmq-poc
+    depends_on:
+      rabbitmq-target:
+        condition: service_healthy
+      rabbitmq-target-second:
+        condition: service_healthy
+    entrypoint: ["/bootstrap/entrypoint.sh"]
+    environment:
+      WARPGATE_ADMIN_PASSWORD: ${WARPGATE_ADMIN_PASSWORD:-Admin1234!}
+      WARPGATE_ADMIN_TOKEN: ${WARPGATE_ADMIN_TOKEN:-token-value}
+    ports:
+      - "2222:2222" # SSH
+      - "8888:8888" # HTTPS admin UI / API
+      - "5672:5672" # RabbitMQ protocol listener, proxied through to rabbitmq-target
+    volumes:
+      - ./data:/data
+      - ./entrypoint.sh:/bootstrap/entrypoint.sh:ro
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+networks:
+  default:
+    name: wg-rabbitmq-test-net
