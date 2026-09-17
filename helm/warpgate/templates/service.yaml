@@ -55,6 +55,14 @@ spec:
       name: redis
     {{- end }}
     {{- end }}
+    {{- with .Values.service.ports.rabbitmq }}
+    {{- if ne (int .) 0 }}
+    - port: {{ . }}
+      targetPort: rabbitmq
+      protocol: TCP
+      name: rabbitmq
+    {{- end }}
+    {{- end }}
     {{- with .Values.service.ports.kubernetes }}
     {{- if ne (int .) 0 }}
     - port: {{ . }}

@@ -167,6 +167,7 @@ the podinit init container.
 {{- if .Values.setup.mysql }} --mysql-port {{ .Values.setup.mysql }}{{ end }}
 {{- if .Values.setup.pgsql }} --postgres-port {{ .Values.setup.pgsql }}{{ end }}
 {{- if .Values.setup.redis }} --redis-port {{ .Values.setup.redis }}{{ end }}
+{{- if .Values.setup.rabbitmq }} --rabbitmq-port {{ .Values.setup.rabbitmq }}{{ end }}
 {{- if .Values.setup.kubernetes }} --kubernetes-port {{ .Values.setup.kubernetes }}{{ end }}
 {{- with include "warpgate.databaseUrl" . }} --database-url "{{ . }}"{{ end }}
 {{- if .Values.setup.recordSessions }} --record-sessions{{ end }}

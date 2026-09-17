@@ -171,6 +171,7 @@ setup:
   mysql: 33306
   pgsql: 55432
   redis: 6379
+  rabbitmq: 5672
   kubernetes: 0
   # kubernetes: 6443
 
@@ -193,6 +194,7 @@ service:
     mysql: 33306
     pgsql: 55432
     redis: 6379
+    rabbitmq: 5672
     kubernetes: 0
     # kubernetes: 6443
 

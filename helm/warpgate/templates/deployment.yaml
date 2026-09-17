@@ -179,6 +179,11 @@ spec:
               containerPort: {{ .Values.setup.redis }}
               protocol: TCP
             {{- end }}
+            {{- if .Values.setup.rabbitmq }}
+            - name: rabbitmq
+              containerPort: {{ .Values.setup.rabbitmq }}
+              protocol: TCP
+            {{- end }}
             {{- if .Values.setup.kubernetes }}
             - name: kubernetes
               containerPort: {{ .Values.setup.kubernetes }}
