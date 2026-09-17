@@ -300,27 +300,42 @@
 
                         {#if target.options.kind === 'MySql' || target.options.kind === 'Postgres'}
                             <div class="row">
-                                <div class="col-8">
-                                    <FormGroup floating label="Target host">
+                                <div
+                                    class="col-{target.options.connectVia ? 12 : 8}"
+                                >
+                                    <FormGroup
+                                        floating
+                                        label={target.options.connectVia ? 'TLS server name (optional)' : 'Target host'}
+                                    >
                                         <input
                                             class="form-control"
                                             bind:value={target.options.host}
                                         >
                                     </FormGroup>
                                 </div>
-                                <div class="col-4">
-                                    <FormGroup floating label="Target port">
-                                        <input
-                                            class="form-control"
-                                            type="number"
-                                            bind:value={target.options.port}
-                                            min="1"
-                                            max="65535"
-                                            step="1"
-                                        >
-                                    </FormGroup>
-                                </div>
+                                {#if !target.options.connectVia}
+                                    <div class="col-4">
+                                        <FormGroup floating label="Target port">
+                                            <input
+                                                class="form-control"
+                                                type="number"
+                                                bind:value={target.options.port}
+                                                min="1"
+                                                max="65535"
+                                                step="1"
+                                            >
+                                        </FormGroup>
+                                    </div>
+                                {/if}
                             </div>
+                            {#if target.options.connectVia}
+                                <p class="text-muted small">
+                                    Connecting through the tunnel configured
+                                    below - this host is only used as the TLS
+                                    server name when TLS is enabled, and the
+                                    port above has no effect.
+                                </p>
+                            {/if}
 
                             <div class="row">
                                 <div class="col">
@@ -461,27 +476,43 @@
 
                         {#if target.options.kind === 'Redis'}
                             <div class="row">
-                                <div class="col-8">
-                                    <FormGroup floating label="Target host">
+                                <div
+                                    class="col-{target.options.connectVia ? 12 : 8}"
+                                >
+                                    <FormGroup
+                                        floating
+                                        label={target.options.connectVia ? 'TLS server name (optional)' : 'Target host'}
+                                    >
                                         <input
                                             class="form-control"
                                             bind:value={target.options.host}
                                         >
                                     </FormGroup>
                                 </div>
-                                <div class="col-4">
-                                    <FormGroup floating label="Target port">
-                                        <input
-                                            class="form-control"
-                                            type="number"
-                                            bind:value={target.options.port}
-                                            min="1"
-                                            max="65535"
-                                            step="1"
-                                        >
-                                    </FormGroup>
-                                </div>
+                                {#if !target.options.connectVia}
+                                    <div class="col-4">
+                                        <FormGroup floating label="Target port">
+                                            <input
+                                                class="form-control"
+                                                type="number"
+                                                bind:value={target.options.port}
+                                                min="1"
+                                                max="65535"
+                                                step="1"
+                                            >
+                                        </FormGroup>
+                                    </div>
+                                {/if}
                             </div>
+                            {#if target.options.connectVia}
+                                <p class="text-muted small">
+                                    Connecting through the tunnel configured
+                                    below - this host is only used as the TLS
+                                    server name when TLS is enabled (and as the
+                                    IAM cluster id fallback below), and the port
+                                    above has no effect.
+                                </p>
+                            {/if}
 
                             <FormGroup
                                 floating
@@ -597,27 +628,42 @@
 
                         {#if target.options.kind === 'RabbitMq'}
                             <div class="row">
-                                <div class="col-8">
-                                    <FormGroup floating label="Target host">
+                                <div
+                                    class="col-{target.options.connectVia ? 12 : 8}"
+                                >
+                                    <FormGroup
+                                        floating
+                                        label={target.options.connectVia ? 'TLS server name (optional)' : 'Target host'}
+                                    >
                                         <input
                                             class="form-control"
                                             bind:value={target.options.host}
                                         >
                                     </FormGroup>
                                 </div>
-                                <div class="col-4">
-                                    <FormGroup floating label="Target port">
-                                        <input
-                                            class="form-control"
-                                            type="number"
-                                            bind:value={target.options.port}
-                                            min="1"
-                                            max="65535"
-                                            step="1"
-                                        >
-                                    </FormGroup>
-                                </div>
+                                {#if !target.options.connectVia}
+                                    <div class="col-4">
+                                        <FormGroup floating label="Target port">
+                                            <input
+                                                class="form-control"
+                                                type="number"
+                                                bind:value={target.options.port}
+                                                min="1"
+                                                max="65535"
+                                                step="1"
+                                            >
+                                        </FormGroup>
+                                    </div>
+                                {/if}
                             </div>
+                            {#if target.options.connectVia}
+                                <p class="text-muted small">
+                                    Connecting through the tunnel configured
+                                    below - this host is only used as the TLS
+                                    server name when TLS is enabled, and the
+                                    port above has no effect.
+                                </p>
+                            {/if}
 
                             <FormGroup floating label="Username">
                                 <input
@@ -663,27 +709,42 @@
 
                         {#if target.options.kind === 'Tcp'}
                             <div class="row">
-                                <div class="col-8">
-                                    <FormGroup floating label="Target host">
+                                <div
+                                    class="col-{target.options.connectVia ? 12 : 8}"
+                                >
+                                    <FormGroup
+                                        floating
+                                        label={target.options.connectVia ? 'TLS server name (optional)' : 'Target host'}
+                                    >
                                         <input
                                             class="form-control"
                                             bind:value={target.options.host}
                                         >
                                     </FormGroup>
                                 </div>
-                                <div class="col-4">
-                                    <FormGroup floating label="Target port">
-                                        <input
-                                            class="form-control"
-                                            type="number"
-                                            bind:value={target.options.port}
-                                            min="1"
-                                            max="65535"
-                                            step="1"
-                                        >
-                                    </FormGroup>
-                                </div>
+                                {#if !target.options.connectVia}
+                                    <div class="col-4">
+                                        <FormGroup floating label="Target port">
+                                            <input
+                                                class="form-control"
+                                                type="number"
+                                                bind:value={target.options.port}
+                                                min="1"
+                                                max="65535"
+                                                step="1"
+                                            >
+                                        </FormGroup>
+                                    </div>
+                                {/if}
                             </div>
+                            {#if target.options.connectVia}
+                                <p class="text-muted small">
+                                    Connecting through the tunnel configured
+                                    below - this host is only used as the TLS
+                                    server name when TLS is enabled, and the
+                                    port above has no effect.
+                                </p>
+                            {/if}
 
                             <TlsConfiguration bind:value={target.options.tls} />
 
